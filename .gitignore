@@ -1,0 +1,22 @@
+# Môi trường ảo
+venv/
+/venv/
+.venv/
+
+# File môi trường chứa thông tin nhạy cảm
+.env
+*.env
+
+# Thư mục instance của Flask chứa database
+# BỎ DÒNG NÀY NẾU BẠN MUỐN ĐỒNG BỘ DATABASE
+# /instance/
+
+# Các file cache của Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Các file tạm, log
+*.log
+*.swp
+*~
