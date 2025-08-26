@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- CUSTOM CSS ĐÃ SỬA LỖI HIỂN THỊ - PHIÊN BẢN MẠNH NHẤT -->
+<style>
+    /* 1. Thiết lập mặc định cho TẤT CẢ các tab: Chữ đậm và màu đen RÕ NÉT */
+    .card-header-tabs .nav-link {
+        font-weight: 700;
+        /* Dùng !important để ép màu đen, chống lại bất kỳ CSS nào khác đang làm nó bị mờ */
+        color: #212529 !important; 
+    }
+
+    /* 2. Khi tab được chọn (active), đổi chữ sang màu xanh */
+    .card-header-tabs .nav-link.active {
+        /* Dùng !important để đảm bảo tab active luôn có màu xanh */
+        color: #0d6efd !important; 
+        background-color: #fff;
+    }
+</style>
+
+<!-- TIÊU ĐỀ TRANG -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2"><i class="bi bi-eyedropper me-2"></i>Chi tiết Ổ dịch</h1>
+        <p class="text-muted mb-0">
+            <strong>{{ 'Sốt xuất huyết Dengue' if odich.loai_benh == 'SXH' else 'Tay chân miệng' }}</strong>
+            tại <span class="text-dark">{{ odich.don_vi.ten_don_vi }}</span>
+        </p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('main.manage_odich_page') }}" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="bi bi-arrow-left me-2"></i> Quay lại Danh sách
+        </a>
+    </div>
+</div>
+
+<!-- NỘI DUNG CHÍNH -->
+<div class="row g-4">
+    <!-- CỘT TRÁI: THÔNG TIN & CÀI ĐẶT Ổ DỊCH -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Thông tin & Cài đặt <span class="badge bg-secondary fw-normal ms-2">ID: {{ odich.id }}</span></h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.view_odich_page', odich_id=odich.id) }}">
+                    
+                    <!-- THÔNG TIN CHUNG -->
+                    <h6 class="text-primary fw-bold"><i class="bi bi-info-circle me-2"></i>Thông tin chung</h6>
+                    <hr class="mt-1 mb-3">
+                    <div class="mb-3">
+                        <label class="form-label">Loại bệnh</label>
+                        <input type="text" class="form-control" value="{{ 'Sốt xuất huyết Dengue' if odich.loai_benh == 'SXH' else 'Tay chân miệng' }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ngay_phat_hien" class="form-label">Ngày phát hiện (*)</label>
+                        <input type="date" class="form-control" id="ngay_phat_hien" name="ngay_phat_hien" value="{{ request.form.get('ngay_phat_hien') or odich.ngay_phat_hien.strftime('%Y-%m-%d') }}" required>
+                    </div>
+
+                    <!-- THÔNG TIN RIÊNG CHO TỪNG BỆNH -->
+                    <div id="tcm_fields_edit" class="{% if odich.loai_benh != 'TCM' %}d-none{% endif %}">
+                        <h6 class="text-primary fw-bold mt-4"><i class="bi bi-bandaid me-2"></i>Thông tin Tay Chân Miệng</h6>
+                        <hr class="mt-1 mb-3">
+                        <label class="form-label">Nơi phát hiện (*)</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="noi_phat_hien_tcm" id="radioCongDongEdit" value="Cộng đồng" {% if odich.noi_phat_hien_tcm == 'Cộng đồng' or not odich.noi_phat_hien_tcm %}checked{% endif %}>
+                                <label class="form-check-label" for="radioCongDongEdit">Cộng đồng</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="noi_phat_hien_tcm" id="radioTruongHocEdit" value="Trường học" {% if odich.noi_phat_hien_tcm == 'Trường học' %}checked{% endif %}>
+                                <label class="form-check-label" for="radioTruongHocEdit">Trường học</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="sxh_fields_edit" class="{% if odich.loai_benh != 'SXH' %}d-none{% endif %}">
+                        <h6 class="text-primary fw-bold mt-4"><i class="bi bi-virus me-2"></i>Thông tin Sốt Xuất Huyết</h6>
+                        <hr class="mt-1 mb-3">
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu chí lập ổ dịch</label>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_2ca_7ngay" id="cb1_edit" {% if odich.tieu_chi_2ca_7ngay %}checked{% endif %}><label class="form-check-label" for="cb1_edit">≥ 2 ca bệnh trong vòng 7 ngày</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_sxh_nang" id="cb2_edit" {% if odich.tieu_chi_sxh_nang %}checked{% endif %}><label class="form-check-label" for="cb2_edit">Có ca SXH Dengue nặng</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_xet_nghiem" id="cb3_edit" {% if odich.tieu_chi_xet_nghiem %}checked{% endif %}><label class="form-check-label" for="cb3_edit">Có ca xác định qua xét nghiệm</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_tu_vong" id="cb4_edit" {% if odich.tieu_chi_tu_vong %}checked{% endif %}><label class="form-check-label" for="cb4_edit">Có ca tử vong</label></div>
+                        </div>
+                        <div>
+                            <label for="loai_xet_nghiem_sxh" class="form-label">Loại xét nghiệm (nếu có)</label>
+                            <input type="text" class="form-control" id="loai_xet_nghiem_sxh" name="loai_xet_nghiem_sxh" value="{{ odich.loai_xet_nghiem_sxh or '' }}" placeholder="NS1, IgM, PCR...">
+                        </div>
+                    </div>
+
+                    <!-- THÔNG TIN XỬ LÝ -->
+                    <h6 class="text-primary fw-bold mt-4"><i class="bi bi-shield-check me-2"></i>Thông tin xử lý</h6>
+                    <hr class="mt-1 mb-3">
+                    <div class="mb-3">
+                        <label for="ngay_xu_ly" class="form-label">Ngày xử lý</label>
+                        <input type="date" class="form-control" id="ngay_xu_ly" name="ngay_xu_ly" value="{{ request.form.get('ngay_xu_ly') or (odich.ngay_xu_ly.strftime('%Y-%m-%d') if odich.ngay_xu_ly else '') }}">
+                    </div>
+                    <div>
+                        <label for="dia_diem_xu_ly" class="form-label">Địa điểm xử lý / Ghi chú</label>
+                        <textarea class="form-control" id="dia_diem_xu_ly" name="dia_diem_xu_ly" rows="3">{{ request.form.get('dia_diem_xu_ly') or (odich.dia_diem_xu_ly or '') }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-4"><i class="bi bi-check-circle-fill me-2"></i>Cập nhật thông tin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: QUẢN LÝ CA BỆNH -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                 <ul class="nav nav-tabs card-header-tabs" id="caseManagementTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="linked-cases-tab" data-bs-toggle="tab" data-bs-target="#linked-cases" type="button" role="tab" aria-controls="linked-cases" aria-selected="true">
+                            <i class="bi bi-people-fill me-1"></i> Ca bệnh đã liên kết <span class="badge rounded-pill bg-secondary ms-2">{{ odich.ca_benh_lien_quan|length }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="add-case-tab" data-bs-toggle="tab" data-bs-target="#add-case" type="button" role="tab" aria-controls="add-case" aria-selected="false">
+                            <i class="bi bi-person-plus-fill me-1"></i> Thêm ca bệnh mới
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="caseManagementTabContent">
+                    <!-- Tab 1: Danh sách ca bệnh đã liên kết -->
+                    <div class="tab-pane fade show active" id="linked-cases" role="tabpanel" aria-labelledby="linked-cases-tab">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" style="vertical-align: middle;">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Mã BN</th>
+                                        <th scope="col">Họ và Tên</th>
+                                        <th scope="col">Ngày khởi phát</th>
+                                        <th scope="col" class="text-end">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for case in odich.ca_benh_lien_quan %}
+                                    <tr>
+                                        <td>{{ case.id }}</td>
+                                        <td><a href="{{ url_for('main.view_case_page', case_id=case.id) }}">{{ case.ho_ten }}</a></td>
+                                        <td>{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'N/A' }}</td>
+                                        <td class="text-end">
+                                            <form action="{{ url_for('main.unlink_case_from_odich_action', case_id=case.id) }}" method="POST" class="d-inline">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Gỡ ca bệnh khỏi ổ dịch" onclick="if(confirm('Bạn có chắc muốn gỡ ca bệnh [{{ case.ho_ten }}] khỏi ổ dịch này không?')) { this.form.submit(); }">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="4" class="text-center text-muted p-4">Chưa có ca bệnh nào được liên kết.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Tab 2: Thêm ca bệnh mới -->
+                    <div class="tab-pane fade" id="add-case" role="tabpanel" aria-labelledby="add-case-tab">
+                        {% if unassigned_cases %}
+                        <div class="alert alert-light border p-3">
+                            <i class="bi bi-info-circle me-2"></i> Gợi ý các ca bệnh <strong>{{ 'SXH' if odich.loai_benh == 'SXH' else 'TCM' }}</strong> tại <strong>{{ odich.don_vi.ten_don_vi }}</strong> chưa được gán, có ngày khởi phát gần đây:
+                        </div>
+                        <form action="{{ url_for('main.link_cases_to_odich_action', odich_id=odich.id) }}" method="POST">
+                            <div class="border rounded p-3 mb-3" style="max-height: 300px; overflow-y: auto;">
+                                {% for case in unassigned_cases %}
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" name="case_ids" value="{{ case.id }}" id="case-{{ case.id }}">
+                                  <label class="form-check-label" for="case-{{ case.id }}">
+                                    <strong>{{ case.ho_ten }}</strong> (Mã: {{ case.id }}, KP: {{ case.ngay_khoi_phat.strftime('%d/%m/%Y') }})
+                                  </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-link-45deg me-2"></i>Thêm các ca đã chọn</button>
+                        </form>
+                        {% else %}
+                        <div class="text-center text-muted p-4">
+                            <i class="bi bi-check-circle-fill h2"></i>
+                            <p class="mt-2">Tuyệt vời! Không còn ca bệnh phù hợp nào (cùng xã, cùng bệnh, chưa được gán) để thêm vào ổ dịch này.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

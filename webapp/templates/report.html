@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="pt-3 pb-2 mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-file-earmark-spreadsheet-fill me-2"></i>Tạo Báo cáo</h1>
+    <p class="text-muted">Chọn các thông số để xuất file báo cáo tổng hợp theo mẫu.</p>
+</div>
+
+<!-- KHUNG CHỨC NĂNG CHÍNH -->
+<div class="card shadow-lg border-0">
+    <div class="row g-0">
+        
+        <!-- CỘT TRÁI: FORM CẤU HÌNH -->
+        <div class="col-lg-5 p-4">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-sliders me-2"></i>1. Cấu hình báo cáo</h5>
+            <hr class="mt-0">
+            
+            <form method="POST" action="{{ url_for('main.report_page') }}">
+                <!-- Mẫu báo cáo -->
+                <div class="mb-3">
+                    <label for="report_template" class="form-label fw-semibold">Mẫu báo cáo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-file-earmark-text"></i></span>
+                        <select class="form-select" id="report_template" name="report_template" required>
+                            <option value="" disabled selected>-- Vui lòng chọn một mẫu --</option>
+                            <optgroup label="Báo cáo Tuần">
+                                <option value="Báo cáo Bệnh truyền nhiễm tổng hợp">Bệnh truyền nhiễm (Tổng hợp)</option>
+                                <option value="Báo cáo Sốt Xuất Huyết">Ca mắc chết Sốt xuất huyết</option>
+                                <option value="Báo cáo Ổ dịch SXH">Ổ dịch Sốt xuất huyết</option>
+                                <option value="Báo cáo Ổ dịch TCM">Ổ dịch Tay chân miệng</option>
+                                <!-- LỰA CHỌN MỚI -->
+                                <option value="Tất cả báo cáo (Tuần)">Tất cả báo cáo (Tuần)</option>  
+                            </optgroup>
+                            <optgroup label="Báo cáo Tháng">
+                                <option value="Báo cáo BTN theo tháng">Bệnh truyền nhiễm (Theo tháng)</option>
+                                <option value="Báo cáo SXH theo tháng">Sốt xuất huyết (Theo tháng)</option>
+                                <!-- LỰA CHỌN MỚI -->
+                                <option value="Tất cả báo cáo (Tháng)">Tất cả báo cáo (Tháng)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Năm báo cáo -->
+                <div class="mb-3">
+                    <label for="year" class="form-label fw-semibold">Năm báo cáo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-calendar3"></i></span>
+                        <select class="form-select" id="year" name="year">
+                            {% for y in range(current_year - 2, current_year + 2) %}
+                            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>Năm {{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ô chọn Tuần (sẽ được ẩn/hiện) -->
+                <div class="mb-3" id="week-input-container">
+                    <label for="week_number" class="form-label fw-semibold">Tuần báo cáo</label>
+                     <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-calendar-week"></i></span>
+                        <input type="number" class="form-control" id="week_number" name="week_number" min="1" max="53" value="{{ selected_week }}" placeholder="Nhập số tuần...">
+                    </div>
+                </div>
+
+                <!-- Ô chọn Tháng (sẽ được ẩn/hiện) -->
+                <div class="mb-3" id="month-input-container">
+                    <label for="month_number" class="form-label fw-semibold">Tháng báo cáo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-calendar-month"></i></span>
+                        <select class="form-select" id="month_number" name="month_number">
+                            {% for m in range(1, 13) %}
+                            <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>Tháng {{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-gear-fill me-2"></i> Tạo Báo cáo
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- CỘT PHẢI: KẾT QUẢ / HƯỚNG DẪN -->
+        <div class="col-lg-7 bg-light p-4 border-start">
+            {% if report_info %}
+                <div class="d-flex flex-column justify-content-center align-items-center h-100 text-center">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 fw-bold">Tạo báo cáo thành công!</h4>
+                    <p class="text-muted mb-3">File <strong>{{ report_info.display_name }}</strong> đang được tải xuống...</p>
+                    <a href="{{ url_for('main.download_report', filename=report_info.filename, display_name=report_info.display_name) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-download me-2"></i> Tải lại nếu có lỗi
+                    </a>
+                </div>
+                <div id="download-trigger" data-url="{{ url_for('main.download_report', filename=report_info.filename, display_name=report_info.display_name) }}" style="display: none;"></div>
+            {% else %}
+                <div class="d-flex flex-column justify-content-center align-items-center h-100 text-center">
+                    <i class="bi bi-file-earmark-arrow-down text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3 fw-bold text-secondary">2. Nhận kết quả</h5>
+                    <p class="text-muted">Vui lòng chọn các thông số và nhấn 'Tạo Báo cáo'.<br>File Excel/Zip sẽ tự động được tải xuống tại đây.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Kích hoạt tải file tự động (nếu có)
+    const trigger = document.getElementById('download-trigger');
+    if (trigger) {
+        window.location.href = trigger.getAttribute('data-url');
+    }
+
+    // Logic cho form động
+    const reportTemplateSelect = document.getElementById('report_template');
+    const weekContainer = document.getElementById('week-input-container');
+    const monthContainer = document.getElementById('month-input-container');
+    const weekInput = document.getElementById('week_number');
+    const monthInput = document.getElementById('month_number');
+
+    function toggleReportInputs() {
+        const selectedValue = reportTemplateSelect.value;
+
+        // Kiểm tra nếu là báo cáo tháng
+        if (selectedValue.includes('tháng') || selectedValue.includes('(Tháng)')) {
+            monthContainer.style.display = 'block'; // Hiện ô tháng
+            monthInput.required = true;             // Bắt buộc nhập
+            weekContainer.style.display = 'none';   // Ẩn ô tuần
+            weekInput.required = false;             // Không bắt buộc
+        } 
+        // Ngược lại, nếu là báo cáo tuần (và đã chọn một mẫu nào đó)
+        else if (selectedValue) {
+            weekContainer.style.display = 'block';  // Hiện ô tuần
+            weekInput.required = true;              // Bắt buộc nhập
+            monthContainer.style.display = 'none';  // Ẩn ô tháng
+            monthInput.required = false;            // Không bắt buộc
+        } 
+        // Nếu chưa chọn gì
+        else {
+            weekContainer.style.display = 'none';
+            monthContainer.style.display = 'none';
+            weekInput.required = false;
+            monthInput.required = false;
+        }
+    }
+
+    // Gán sự kiện 'change' cho dropdown
+    reportTemplateSelect.addEventListener('change', toggleReportInputs);
+
+    // Chạy hàm một lần khi tải trang để thiết lập trạng thái ban đầu
+    toggleReportInputs();
+});
+</script>
+{% endblock %}

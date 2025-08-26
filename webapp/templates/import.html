@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pt-3 pb-2 mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-cloud-upload-fill me-2"></i>Import Dữ liệu TT54</h1>
+    <p class="text-muted">Tải lên và xử lý hàng loạt ca bệnh từ file Excel theo mẫu Thông tư 54.</p>
+</div>
+
+<!-- VÙNG HIỂN THỊ THÔNG BÁO (FLASH MESSAGE) ĐÃ NÂNG CẤP -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, msg in messages %}
+            {% if msg.message %} <!-- Kiểm tra xem msg có phải là dictionary không -->
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <strong>{{ msg.message }}</strong>
+                    {% if msg.errors and msg.errors|length > 0 %}
+                        <p class="mt-2 mb-1">Chi tiết các dòng lỗi:</p>
+                        <ul class="mb-0" style="max-height: 150px; overflow-y: auto;">
+                            {% for err in msg.errors %}
+                                <li><strong>Dòng {{ err.row }}:</strong> {{ err.error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% else %} <!-- Nếu là flash message thông thường -->
+                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- KHUNG CHỨC NĂNG CHÍNH -->
+
+<div class="card shadow-lg border-0">
+    <div class="row g-0">
+
+<!-- CỘT TRÁI: FORM UPLOAD -->
+    <div class="col-lg-5 p-4">
+        <h5 class="fw-bold text-primary mb-3"><span class="badge bg-primary me-2">1</span>Chọn File để Tải lên</h5>
+        <hr class="mt-0">
+        
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.import_page') }}">
+            <div class="mb-3">
+                <label for="excel_file" class="form-label fw-semibold">File Excel theo mẫu (*.xlsx)</label>
+                <input class="form-control form-control-lg" type="file" id="excel_file" name="excel_file" accept=".xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+            </div>
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-arrow-right-circle-fill me-2"></i> Bắt đầu Import
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- CỘT PHẢI: HƯỚNG DẪN & LƯU Ý -->
+    <div class="col-lg-7 bg-light p-4 border-start">
+        <h5 class="fw-bold text-secondary mb-3"><span class="badge bg-secondary me-2">2</span>Hướng dẫn & Lưu ý quan trọng</h5>
+        <hr class="mt-0">
+        
+        <ul class="list-unstyled">
+            <li class="d-flex mb-3">
+                <i class="bi bi-file-earmark-check-fill text-success fs-4 me-3"></i>
+                <div>
+                    <strong>Định dạng File</strong>
+                    <p class="small text-muted mb-0">Chỉ sử dụng file Excel (.xlsx) theo đúng mẫu Thông tư 54. Hãy đảm bảo file tuân thủ đúng cấu trúc được quy định.</p>
+                </div>
+            </li>
+             <li class="d-flex mb-3">
+                <i class="bi bi-clipboard-data-fill text-info fs-4 me-3"></i>
+                <div>
+                    <strong>Kiểm tra Dữ liệu</strong>
+                    <p class="small text-muted mb-0">Hãy chắc chắn các cột quan trọng như "Họ tên", "Ngày khởi phát", và "Xã" được điền đầy đủ và chính xác trước khi tải lên.</p>
+                </div>
+            </li>
+            
+            {% if session.get('role') == 'admin' %}
+            <li class="d-flex mb-3">
+                <i class="bi bi-shield-lock-fill text-primary fs-4 me-3"></i>
+                <div>
+                    <strong>Quyền Admin</strong>
+                    <p class="small text-muted mb-0">Hệ thống sẽ tự động phân loại ca bệnh vào đúng xã dựa trên cột "Xã" trong file Excel của bạn.</p>
+                </div>
+            </li>
+            {% else %}
+             <li class="d-flex mb-3">
+                <i class="bi bi-geo-alt-fill text-warning fs-4 me-3"></i>
+                <div>
+                    <strong>Phạm vi Import</strong>
+                    <p class="small text-muted mb-0">Dữ liệu sẽ chỉ được ghi nhận cho đơn vị của bạn: <strong>{{ session.get('don_vi_ten', '') }}</strong>. Các dòng dữ liệu thuộc xã khác sẽ bị bỏ qua.</p>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+</div>
+{% endblock %}

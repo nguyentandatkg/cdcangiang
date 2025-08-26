@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-shield-plus me-2"></i>Khai báo Ổ dịch Mới</h1>
+        <p class="text-muted mb-0">Điền thông tin để tạo một ổ dịch mới trong hệ thống.</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        {% if case %}
+        <a href="{{ url_for('main.view_case_page', case_id=case.id) }}" class="btn btn-outline-secondary d-flex align-items-center"><i class="bi bi-x-lg me-2"></i> Hủy</a>
+        {% else %}
+        <a href="{{ url_for('main.manage_odich_page') }}" class="btn btn-outline-secondary d-flex align-items-center"><i class="bi bi-x-lg me-2"></i> Hủy</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- FORM NHẬP LIỆU -->
+<form method="POST" action="{{ url_for('main.new_odich_page') }}">
+    {% if case %}<input type="hidden" name="case_id_from_url" value="{{ case.id }}">{% endif %}
+    
+    <div class="row g-4">
+        <!-- CỘT TRÁI: FORM CHÍNH -->
+        <div class="col-lg-8" id="main-form-column">
+            <!-- Card 1: Thông tin cơ bản -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">1</span>Thông tin Cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Loại bệnh (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-virus"></i></span>
+                                <select class="form-select" name="loai_benh" id="loai_benh_select" required {% if case %}disabled{% endif %}>
+                                    <option value="" disabled {% if not prefill_data.loai_benh %}selected{% endif %}>-- Chọn loại bệnh --</option>
+                                    <option value="SXH" {% if prefill_data.loai_benh == 'SXH' %}selected{% endif %}>Sốt xuất huyết Dengue</option>
+                                    <option value="TCM" {% if prefill_data.loai_benh == 'TCM' %}selected{% endif %}>Tay chân miệng</option>
+                                </select>
+                                {% if case %}<input type="hidden" name="loai_benh" value="{{ prefill_data.loai_benh }}">{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Thuộc xã (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+                                {% if session.get('role') == 'admin' and not case %}
+                                <select class="form-select" name="xa_id" id="xa_id_select_admin" required>
+                                    <option value="" disabled selected>-- Chọn xã --</option>
+                                    {% for xa in all_xa_list %}<option value="{{ xa.id }}">{{ xa.ten_don_vi }}</option>{% endfor %}
+                                </select>
+                                {% else %}
+                                <input type="text" class="form-control" id="xa_ten_text_input" value="{{ prefill_data.xa_ten if case else session.get('don_vi_ten') }}" disabled>
+                                <input type="hidden" name="xa_id" id="xa_id_hidden_input" value="{{ prefill_data.xa_id if case else session.get('don_vi_id') }}">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ngày phát hiện (*)</label>
+                             <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control" name="ngay_phat_hien" value="{{ prefill_data.get('ngay_phat_hien', date.today()).strftime('%Y-%m-%d') }}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Thông tin chuyên biệt -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">2</span>Thông tin Chuyên biệt theo Bệnh</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Placeholder khi chưa chọn bệnh -->
+                    <div id="placeholder_fields" class="text-center text-muted p-3">
+                        <i class="bi bi-info-circle h4"></i>
+                        <p>Vui lòng chọn <strong>Loại bệnh</strong> ở trên để hiển thị các trường thông tin phù hợp.</p>
+                    </div>
+                    <!-- Fields cho TCM -->
+                    <div id="tcm_fields" class="d-none">
+                        <h6 class="fw-bold text-secondary">Thông tin cho ổ dịch Tay Chân Miệng</h6>
+                        <hr class="mt-1">
+                        <label class="form-label fw-semibold">Nơi phát hiện (*)</label>
+                        <div>
+                            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="noi_phat_hien_tcm" id="radioCongDong" value="Cộng đồng" checked><label class="form-check-label" for="radioCongDong">Cộng đồng</label></div>
+                            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="noi_phat_hien_tcm" id="radioTruongHoc" value="Trường học"><label class="form-check-label" for="radioTruongHoc">Trường học</label></div>
+                        </div>
+                    </div>
+                    <!-- Fields cho SXH -->
+                    <div id="sxh_fields" class="d-none">
+                        <h6 class="fw-bold text-secondary">Thông tin cho ổ dịch Sốt Xuất Huyết</h6>
+                        <hr class="mt-1">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tiêu chí lập ổ dịch</label>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_2ca_7ngay" id="cb1"><label class="form-check-label" for="cb1">≥ 2 ca bệnh / 7 ngày</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_sxh_nang" id="cb2"><label class="form-check-label" for="cb2">Có ca SXH Dengue nặng</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_xet_nghiem" id="cb3"><label class="form-check-label" for="cb3">Có ca XN dương tính</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="tieu_chi_tu_vong" id="cb4"><label class="form-check-label" for="cb4">Có ca tử vong</label></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Loại xét nghiệm (nếu có)</label>
+                                <input type="text" class="form-control" name="loai_xet_nghiem_sxh" placeholder="NS1, IgM, PCR...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Thông tin xử lý -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">3</span>Thông tin Xử lý (Tùy chọn)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày xử lý</label>
+                            <input type="date" class="form-control" name="ngay_xu_ly">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Địa điểm xử lý / Ghi chú</label>
+                            <textarea class="form-control" name="dia_diem_xu_ly" rows="2">{{ prefill_data.get('dia_diem_xu_ly', '') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút Lưu -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i>Lưu Ổ dịch
+                </button>
+            </div>
+        </div>
+        
+        <!-- CỘT PHẢI: THÔNG TIN PHỤ -->
+        <div class="col-lg-4">
+            {% if case %}
+            <div class="card shadow-sm border-0 mb-4" id="case-info-card">
+                <div class="card-header bg-info-subtle">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Ca bệnh Chỉ điểm</h5>
+                </div>
+                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Họ tên:</strong> {{ case.ho_ten }}</li>
+                    <li class="list-group-item"><strong>Mã BN:</strong> {{ case.id }}</li>
+                    <li class="list-group-item"><strong>Chẩn đoán:</strong> {{ case.chan_doan_chinh }}</li>
+                    <li class="list-group-item"><strong>Khởi phát:</strong> {{ case.ngay_khoi_phat.strftime('%d/%m/%Y') }}</li>
+                </ul>
+                <div class="card-footer small text-muted">
+                    Thông tin từ ca bệnh này sẽ được tự động điền vào form.
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <h5 class="fw-bold text-secondary"><i class="bi bi-lightbulb-fill me-2"></i>Hướng dẫn</h5>
+                    <hr>
+                     <div class="d-grid mb-3">
+                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchCaseModal">
+                            <i class="bi bi-search me-2"></i> Tìm ca bệnh chỉ điểm
+                        </button>
+                    </div>
+                    <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Các trường có dấu (*) là bắt buộc.</p>
+                    <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Chọn <strong>Loại bệnh</strong> để hiển thị các thông tin cần khai báo thêm.</p>
+                    <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Nếu tạo từ ca bệnh, ổ dịch sẽ tự động được liên kết với ca bệnh đó.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .fw-semibold { font-weight: 600 !important; }
+</style>
+
+<!-- Search Case Modal -->
+<div class="modal fade" id="searchCaseModal" tabindex="-1" aria-labelledby="searchCaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchCaseModalLabel"><i class="bi bi-search me-2"></i>Tìm kiếm Ca bệnh Chỉ điểm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" id="caseSearchInput" class="form-control" placeholder="Nhập tên hoặc mã bệnh nhân...">
+                    <button class="btn btn-primary" type="button" id="caseSearchBtn">Tìm kiếm</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã BN</th>
+                                <th>Họ Tên</th>
+                                <th>Ngày KP</th>
+                                <th>Xã</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="caseSearchResults">
+                            <tr><td colspan="5" class="text-center text-muted">Vui lòng chọn <strong>Loại bệnh</strong>, sau đó nhập thông tin và nhấn tìm kiếm.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // === PART 1: LOGIC ẨN/HIỆN TRƯỜNG THEO LOẠI BỆNH ===
+    const loaiBenhSelect = document.getElementById('loai_benh_select');
+    const tcmFields = document.getElementById('tcm_fields');
+    const sxhFields = document.getElementById('sxh_fields');
+    const placeholder = document.getElementById('placeholder_fields');
+
+    function toggleDiseaseFields() {
+        const selectedValue = loaiBenhSelect.value;
+        
+        tcmFields.classList.add('d-none');
+        sxhFields.classList.add('d-none');
+        placeholder.classList.add('d-none');
+
+        if (selectedValue === 'TCM') {
+            tcmFields.classList.remove('d-none');
+        } else if (selectedValue === 'SXH') {
+            sxhFields.classList.remove('d-none');
+        } else {
+            placeholder.classList.remove('d-none');
+        }
+    }
+    
+    loaiBenhSelect.addEventListener('change', toggleDiseaseFields);
+    toggleDiseaseFields(); // Chạy lần đầu khi tải trang
+
+    // === PART 2: LOGIC TÌM KIẾM CA BỆNH TRONG MODAL ===
+    const searchModalEl = document.getElementById('searchCaseModal');
+    if (!searchModalEl) return;
+    
+    const searchModal = new bootstrap.Modal(searchModalEl);
+    const caseSearchInput = document.getElementById('caseSearchInput');
+    const caseSearchBtn = document.getElementById('caseSearchBtn');
+    const caseSearchResultsTbody = document.getElementById('caseSearchResults');
+    
+    // =========================================================================
+    // SỬA LỖI CÚ PHÁP JINJA2 TẠI ĐÂY
+    // =========================================================================
+    const mainForm = document.querySelector('form[action="{{ url_for("main.new_odich_page") }}"]');
+    // =========================================================================
+
+    const xaIdHiddenInput = document.getElementById('xa_id_hidden_input');
+    const xaTextInput = document.getElementById('xa_ten_text_input'); 
+    const xaSelectAdmin = document.getElementById('xa_id_select_admin');
+    const diaDiemTextarea = mainForm.querySelector('textarea[name="dia_diem_xu_ly"]');
+    const mainFormColumn = document.getElementById('main-form-column');
+
+    const performSearch = async () => {
+        const term = caseSearchInput.value;
+        const loaiBenh = loaiBenhSelect.value;
+
+        if (!loaiBenh) {
+            alert('Vui lòng chọn "Loại bệnh" trước khi tìm kiếm ca bệnh!');
+            return;
+        }
+
+        caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> Đang tìm...</td></tr>`;
+
+        const params = new URLSearchParams({ term: term, loai_benh: loaiBenh });
+        const searchUrl = `{{ url_for('main.api_search_cases') }}?${params.toString()}`;
+
+        try {
+            const response = await fetch(searchUrl);
+            const cases = await response.json();
+
+            caseSearchResultsTbody.innerHTML = '';
+            if (cases.length > 0) {
+                cases.forEach(caseData => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${caseData.ma_so_benh_nhan}</td>
+                        <td>${caseData.ho_ten}</td>
+                        <td>${caseData.ngay_khoi_phat}</td>
+                        <td>${caseData.xa_ten}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success select-case-btn" data-case='${JSON.stringify(caseData)}'>Chọn</button>
+                        </td>
+                    `;
+                    caseSearchResultsTbody.appendChild(row);
+                });
+            } else {
+                caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Không tìm thấy ca bệnh nào phù hợp.</td></tr>`;
+            }
+        } catch (error) {
+            console.error('Lỗi khi tìm kiếm ca bệnh:', error);
+            caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Có lỗi xảy ra, vui lòng thử lại.</td></tr>`;
+        }
+    };
+
+    caseSearchBtn.addEventListener('click', performSearch);
+    caseSearchInput.addEventListener('keypress', e => e.key === 'Enter' && performSearch());
+
+    caseSearchResultsTbody.addEventListener('click', function(e) {
+        if (e.target.classList.contains('select-case-btn')) {
+            const caseData = JSON.parse(e.target.dataset.case);
+
+            if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
+            if (xaTextInput) xaTextInput.value = caseData.xa_ten;
+            if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
+
+            if (diaDiemTextarea) {
+                let diaDiemGoiY = `${caseData.dia_chi_chi_tiet}, ${caseData.dia_chi_ap}`;
+                if (diaDiemGoiY.startsWith(', ')) diaDiemGoiY = diaDiemGoiY.substring(2);
+                if (diaDiemGoiY.endsWith(', ')) diaDiemGoiY = diaDiemGoiY.slice(0, -2);
+                diaDiemTextarea.value = diaDiemGoiY;
+            }
+            
+            let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
+            if (oldHiddenInput) oldHiddenInput.remove();
+            
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'case_id_from_url';
+            hiddenInput.value = caseData.id;
+            mainForm.appendChild(hiddenInput);
+            
+            searchModal.hide();
+            
+            const oldInfo = document.getElementById('case-info-alert');
+            if(oldInfo) oldInfo.remove();
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info mt-3';
+            infoDiv.id = 'case-info-alert';
+            infoDiv.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>Đã chọn ca bệnh chỉ điểm: <strong>${caseData.ho_ten}</strong>. Thông tin đã được tự động điền vào form.`;
+            
+            if (mainFormColumn) {
+                mainFormColumn.insertBefore(infoDiv, mainFormColumn.firstChild);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

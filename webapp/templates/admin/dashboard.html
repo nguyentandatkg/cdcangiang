@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="pt-3 pb-2 mb-4 border-bottom">
+    <h1 class="h2 fw-bold"><i class="bi bi-person-fill-gear me-2"></i>Bảng điều khiển Quản trị viên</h1>
+    <p class="text-muted mb-0">Truy cập các chức năng quản lý cốt lõi của hệ thống.</p>
+</div>
+
+<!-- CÁC CARD CHỨC NĂNG -->
+<div class="row g-4 justify-content-center pt-3">
+
+    <!-- Card 1: Quản lý Đơn vị Hành chính -->
+    <div class="col-xl-4 col-lg-5 col-md-6">
+        <div class="admin-card h-100">
+            <a href="{{ url_for('admin.manage_don_vi') }}" class="stretched-link text-decoration-none text-body">
+                <div class="card-body p-4 text-center">
+                    <div class="admin-card-icon mx-auto mb-3 icon-dv-hanhchinh">
+                        <i class="bi bi-buildings-fill"></i>
+                    </div>
+                    <h5 class="card-title fw-bold mb-2">Quản lý Đơn vị Hành chính</h5>
+                    <p class="card-text small text-body-secondary">
+                        Thêm, sửa, xóa các Tỉnh, Khu vực, Xã, Ấp trong hệ thống.
+                    </p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Card 2: Quản lý Người dùng -->
+    <div class="col-xl-4 col-lg-5 col-md-6">
+        <div class="admin-card h-100">
+            <a href="{{ url_for('admin.manage_users') }}" class="stretched-link text-decoration-none text-body">
+                <div class="card-body p-4 text-center">
+                    <div class="admin-card-icon mx-auto mb-3 icon-nguoidung">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h5 class="card-title fw-bold mb-2">Quản lý Người dùng</h5>
+                    <p class="card-text small text-body-secondary">
+                        Tạo và quản lý tài khoản cho các cấp người dùng khác nhau.
+                    </p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* Định nghĩa các biến màu sắc và gradient */
+    :root {
+        --admin-card-bg: var(--bs-body-bg);
+        --admin-card-border: var(--bs-border-color-translucent);
+        
+        /* Gradient cho icon */
+        --gradient-dv: linear-gradient(135deg, #0077b6, #00b4d8);
+        --gradient-user: linear-gradient(135deg, #2a9d8f, #52b788);
+        
+        /* Gradient cho viền khi hover */
+        --glow-dv: linear-gradient(135deg, #00b4d8, #90e0ef);
+        --glow-user: linear-gradient(135deg, #52b788, #ade8f4);
+    }
+    
+    .admin-card {
+        background-color: var(--admin-card-bg);
+        border: 1px solid var(--admin-card-border);
+        border-radius: 0.75rem; /* bo tròn góc card */
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .admin-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        border-radius: inherit;
+        padding: 2px; /* Độ dày của viền phát sáng */
+        background: transparent;
+        -webkit-mask: 
+            linear-gradient(#fff 0 0) content-box, 
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        [data-bs-theme="dark"] & {
+             box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+        }
+    }
+    
+    .admin-card:hover::before {
+        opacity: 1;
+    }
+    
+    /* Gán màu viền phát sáng cho từng loại card */
+    .col-md-6:nth-child(1) .admin-card::before {
+        background-image: var(--glow-dv);
+    }
+    .col-md-6:nth-child(2) .admin-card::before {
+        background-image: var(--glow-user);
+    }
+
+    .admin-card-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--bs-secondary-bg);
+        font-size: 2.5rem; /* Icon to hơn */
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Gán màu icon cho từng loại card */
+    .icon-dv-hanhchinh { color: #0096c7; }
+    .icon-nguoidung { color: #2a9d8f; }
+
+    .admin-card:hover .admin-card-icon {
+        color: #fff;
+    }
+    .admin-card:hover .icon-dv-hanhchinh {
+        background-image: var(--gradient-dv);
+    }
+    .admin-card:hover .icon-nguoidung {
+        background-image: var(--gradient-user);
+    }
+</style>
+{% endblock %}

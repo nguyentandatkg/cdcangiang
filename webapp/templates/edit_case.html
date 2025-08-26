@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-pencil-square me-2"></i>Sửa thông tin Ca bệnh</h1>
+        <p class="text-muted mb-0">Cập nhật hồ sơ cho bệnh nhân: <strong>{{ case.ho_ten }}</strong></p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- THAY ĐỔI 1: Thêm query string vào link "Hủy" -->
+        <a href="{{ url_for('main.cases_page') }}?{{ current_query_string }}" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="bi bi-x-lg me-2"></i> Hủy và Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- FORM CHỈNH SỬA -->
+<form method="POST" action="{{ url_for('main.edit_case_page', case_id=case.id) }}">
+    <!-- THAY ĐỔI 2: Thêm trường ẩn để lưu lại bộ lọc -->
+    <input type="hidden" name="query_string" value="{{ current_query_string }}">
+
+    <div class="row g-4">
+        <!-- CỘT TRÁI: THÔNG TIN CHÍNH -->
+        <div class="col-lg-8">
+            <!-- Card thông tin bệnh nhân -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-vcard me-2"></i>Thông tin Bệnh nhân</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ho_ten" class="form-label fw-semibold">Họ và tên (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="form-control" id="ho_ten" name="ho_ten" value="{{ case.ho_ten or '' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ngay_sinh" class="form-label fw-semibold">Ngày sinh</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control" id="ngay_sinh" name="ngay_sinh" value="{{ case.ngay_sinh.strftime('%Y-%m-%d') if case.ngay_sinh else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dia_chi_ap" class="form-label fw-semibold">Ấp/Khu phố</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-pin-map-fill"></i></span>
+                                <select class="form-select" id="dia_chi_ap" name="dia_chi_ap">
+                                    <option value="">-- Chọn ấp/khu phố --</option>
+                                    {% for ap in ap_list %}
+                                    <option value="{{ ap }}" {% if ap == case.dia_chi_ap %}selected{% endif %}>{{ ap }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card thông tin bệnh án -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard2-pulse-fill me-2"></i>Thông tin Bệnh án</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ngay_khoi_phat" class="form-label fw-semibold">Ngày khởi phát (*)</label>
+                             <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+                                <input type="date" class="form-control" id="ngay_khoi_phat" name="ngay_khoi_phat" value="{{ case.ngay_khoi_phat.strftime('%Y-%m-%d') if case.ngay_khoi_phat else '' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="chan_doan_chinh" class="form-label fw-semibold">Chẩn đoán chính (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-file-earmark-medical"></i></span>
+                                <input type="text" class="form-control" id="chan_doan_chinh" name="chan_doan_chinh" value="{{ case.chan_doan_chinh or '' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label for="tinh_trang_hien_nay" class="form-label fw-semibold">Tình trạng hiện nay</label>
+                             <input type="text" class="form-control" id="tinh_trang_hien_nay" name="tinh_trang_hien_nay" value="{{ case.tinh_trang_hien_nay or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút Lưu -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i>Lưu thay đổi
+                </button>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: THÔNG TIN PHỤ VÀ LIÊN KẾT -->
+        <div class="col-lg-4">
+             <!-- Card thông tin quản lý -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Thông tin Quản lý</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ID Ca bệnh:
+                        <span class="badge bg-secondary rounded-pill">{{ case.id }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Mã số:
+                        <strong>{{ case.ma_so_benh_nhan }}</strong>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Card liên kết ổ dịch -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-shield-virus me-2"></i>Thông tin Dịch tễ</h5>
+                </div>
+                <div class="card-body">
+                    <label for="o_dich_id" class="form-label fw-semibold">Thuộc ổ dịch (nếu có)</label>
+                    <select class="form-select" id="o_dich_id" name="o_dich_id">
+                        <option value="">-- Không thuộc ổ dịch nào --</option>
+                        {% for od in odich_list %}
+                        <option value="{{ od.id }}" {% if od.id == case.o_dich_id %}selected{% endif %}>
+                            #{{od.id}} - {{ od.loai_benh }} ({{ od.ngay_phat_hien.strftime('%d/%m') }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Chọn một ổ dịch có sẵn để liên kết ca bệnh này vào.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .fw-semibold { font-weight: 600 !important; }
+</style>
+{% endblock %}

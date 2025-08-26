@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-pencil-square"></i> Sửa Đơn vị: {{ unit.ten_don_vi }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.edit_don_vi', don_vi_id=unit.id) }}">
+                    <div class="mb-3">
+                        <label for="ten_don_vi" class="form-label">Tên đơn vị</label>
+                        <input type="text" class="form-control" id="ten_don_vi" name="ten_don_vi" value="{{ unit.ten_don_vi }}" required>
+                    </div>
+                    
+                    {# Chỉ cho phép sửa đơn vị cha nếu đơn vị không phải là Tỉnh #}
+                    {% if unit.cap_don_vi != 'Tỉnh' %}
+                    <div class="mb-3">
+                        <label for="parent_id" class="form-label">Thuộc đơn vị cha</label>
+                        <select class="form-select" id="parent_id" name="parent_id">
+                            <option value="">-- Chọn đơn vị cha --</option>
+                            {# JavaScript sẽ điền các lựa chọn vào đây #}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <a href="{{ url_for('admin.manage_don_vi') }}" class="btn btn-secondary">Hủy</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Chỉ chạy script nếu cần chọn đơn vị cha #}
+{% if unit.cap_don_vi != 'Tỉnh' %}
+<script>
+    const allUnits = {{ all_units_js|tojson }};
+    const parentSelect = document.getElementById('parent_id');
+    const currentUnitCap = "{{ unit.cap_don_vi }}";
+    const currentParentId = "{{ unit.parent_id or '' }}";
+    const parentMap = {'Khu vực': 'Tỉnh', 'Xã': 'Khu vực', 'Ấp': 'Xã'};
+
+    function populateParentOptions() {
+        const parentLevel = parentMap[currentUnitCap];
+        parentSelect.innerHTML = '<option value="">-- Chọn đơn vị cha --</option>'; 
+        
+        allUnits.forEach(u => {
+            if (u.cap_don_vi === parentLevel) {
+                const option = document.createElement('option');
+                option.value = u.id;
+                option.textContent = u.ten_don_vi;
+                // Tự động chọn đơn vị cha hiện tại
+                if (u.id.toString() === currentParentId) {
+                    option.selected = true;
+                }
+                parentSelect.appendChild(option);
+            }
+        });
+    }
+    
+    // Chạy ngay khi tải trang
+    populateParentOptions();
+</script>
+{% endif %}
+{% endblock %}

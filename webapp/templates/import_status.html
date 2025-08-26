@@ -1,0 +1,90 @@
+<!-- app/templates/import_status.html -->
+{% extends "base.html" %} <!-- Hoặc layout của bạn -->
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Trạng thái Import</h2>
+    <div id="status-container">
+        <div class="d-flex align-items-center">
+            <strong>Trạng thái:</strong>
+            <div id="status-text" class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+            <span id="status-message" class="ms-2">Đang xử lý, vui lòng chờ...</span>
+        </div>
+    </div>
+
+    <div id="result-container" class="mt-4" style="display: none;">
+        <h3>Kết quả Import</h3>
+        <div id="result-message" class="alert"></div>
+        <h4>Chi tiết lỗi (nếu có):</h4>
+        <ul id="error-list" class="list-group">
+            <li class="list-group-item">Không có lỗi nào.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const jobId = "{{ job_id }}";
+    const statusText = document.getElementById('status-text');
+    const statusMessage = document.getElementById('status-message');
+    const statusContainer = document.getElementById('status-container');
+    const resultContainer = document.getElementById('result-container');
+    const resultMessage = document.getElementById('result-message');
+    const errorList = document.getElementById('error-list');
+
+    function checkJobStatus() {
+        fetch(`/task-result/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                const jobStatus = data.data.job_status;
+                const jobResult = data.data.job_result;
+
+                statusMessage.textContent = `Trạng thái: ${jobStatus}`;
+
+                if (jobStatus === 'finished' || jobStatus === 'failed') {
+                    // Dừng polling
+                    clearInterval(intervalId);
+                    
+                    // Ẩn spinner, hiện kết quả
+                    statusContainer.style.display = 'none';
+                    resultContainer.style.display = 'block';
+
+                    if (jobResult && jobResult.success) {
+                        resultMessage.className = 'alert alert-success';
+                        resultMessage.textContent = jobResult.message;
+                        if (jobResult.errors && jobResult.errors.length > 0) {
+                            renderErrors(jobResult.errors);
+                        }
+                    } else {
+                        resultMessage.className = 'alert alert-danger';
+                        resultMessage.textContent = jobResult ? jobResult.message : 'Import thất bại với lỗi không xác định.';
+                         if (jobResult.errors && jobResult.errors.length > 0) {
+                            renderErrors(jobResult.errors);
+                        }
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching job status:', err);
+                statusMessage.textContent = 'Lỗi kết nối. Không thể lấy trạng thái.';
+                clearInterval(intervalId); // Dừng nếu có lỗi mạng
+            });
+    }
+
+    function renderErrors(errors) {
+        errorList.innerHTML = ''; // Xóa nội dung cũ
+        if (errors.length === 0) {
+            errorList.innerHTML = '<li class="list-group-item">Không có lỗi chi tiết.</li>';
+            return;
+        }
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item list-group-item-warning';
+            li.textContent = `Dòng ${error.row}: ${error.error}`;
+            errorList.appendChild(li);
+        });
+    }
+
+    // Bắt đầu polling mỗi 2 giây
+    const intervalId = setInterval(checkJobStatus, 2000);
+</script>
+{% endblock %}

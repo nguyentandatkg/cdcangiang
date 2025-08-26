@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-eyedropper me-2"></i>Sửa thông tin Ổ dịch</h1>
+        <p class="text-muted mb-0">
+            Cập nhật ổ dịch <strong>{{ 'SXH' if odich.loai_benh == 'SXH' else 'TCM' }}</strong> tại <strong>{{ odich.don_vi.ten_don_vi }}</strong>
+        </p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('main.manage_odich_page') }}" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="bi bi-x-lg me-2"></i> Hủy
+        </a>
+    </div>
+</div>
+
+<!-- FORM CHỈNH SỬA -->
+<form method="POST" action="{{ url_for('main.edit_odich_page', odich_id=odich.id) }}">
+    <div class="row g-4">
+        <!-- CỘT TRÁI: THÔNG TIN CHÍNH -->
+        <div class="col-lg-8">
+            <!-- Card thông tin cơ bản -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Thông tin Cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="loai_benh" class="form-label fw-semibold">Loại bệnh (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-virus"></i></span>
+                                <select class="form-select" id="loai_benh" name="loai_benh" required>
+                                    <option value="SXH" {% if odich.loai_benh == 'SXH' %}selected{% endif %}>Sốt xuất huyết Dengue</option>
+                                    <option value="TCM" {% if odich.loai_benh == 'TCM' %}selected{% endif %}>Tay chân miệng</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                             <label for="xa_id" class="form-label fw-semibold">Thuộc xã (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+                                {% if session.get('role') == 'admin' %}
+                                <select class="form-select" id="xa_id" name="xa_id" required>
+                                    {% for xa in all_xa_list %}
+                                    <option value="{{ xa.id }}" {% if xa.id == odich.xa_id %}selected{% endif %}>{{ xa.ten_don_vi }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% else %}
+                                <input type="text" class="form-control" value="{{ odich.don_vi.ten_don_vi }}" disabled>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="ngay_phat_hien" class="form-label fw-semibold">Ngày phát hiện (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control" id="ngay_phat_hien" name="ngay_phat_hien" value="{{ odich.ngay_phat_hien.strftime('%Y-%m-%d') }}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card thông tin xử lý -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-shield-check me-2"></i>Thông tin Xử lý</h5>
+                </div>
+                <div class="card-body">
+                     <div class="row g-3">
+                         <div class="col-md-12">
+                            <label for="ngay_xu_ly" class="form-label fw-semibold">Ngày xử lý</label>
+                             <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                                <input type="date" class="form-control" id="ngay_xu_ly" name="ngay_xu_ly" value="{{ odich.ngay_xu_ly.strftime('%Y-%m-%d') if odich.ngay_xu_ly }}">
+                            </div>
+                        </div>
+                         <div class="col-md-12">
+                            <label for="dia_diem_xu_ly" class="form-label fw-semibold">Địa điểm xử lý / Ghi chú</label>
+                            <textarea class="form-control" id="dia_diem_xu_ly" name="dia_diem_xu_ly" rows="3">{{ odich.dia_diem_xu_ly or '' }}</textarea>
+                        </div>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Nút Lưu -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i>Lưu thay đổi
+                </button>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: THÔNG TIN PHỤ -->
+        <div class="col-lg-4">
+             <!-- Card thông tin quản lý -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-key-fill me-2"></i>Mã định danh</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ID Ổ dịch:
+                        <span class="badge bg-secondary rounded-pill">{{ odich.id }}</span>
+                    </li>
+                </ul>
+            </div>
+            
+             <!-- Card Hướng dẫn -->
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body text-center text-muted">
+                    <i class="bi bi-info-circle h4"></i>
+                    <p class="small mt-2">Vui lòng điền đầy đủ thông tin vào các trường có dấu (*). Các thông tin này rất quan trọng cho việc thống kê và báo cáo sau này.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .fw-semibold { font-weight: 600 !important; }
+</style>
+{% endblock %}

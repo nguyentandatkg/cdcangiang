@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2 fw-bold"><i class="bi bi-graph-up me-2"></i>Bảng điều khiển Tình hình Dịch bệnh</h1>
+    <p class="text-muted mb-0">Tổng quan dữ liệu dịch bệnh qua các biểu đồ trực quan.</p>
+</div>
+
+<!-- THANH LỌC TỔNG -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body bg-light">
+        <form method="GET" action="{{ url_for('main.dashboard_page') }}" id="filter-form">
+            <div class="row g-3 align-items-end">
+                <!-- Lọc theo thời gian -->
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-semibold">Khoảng thời gian</label>
+                    <div class="btn-group w-100">
+                        {# Xây dựng lại link với các tham số lọc khác để không bị mất state #}
+                        {% set other_args = {'disease': request.args.get('disease'), 'khu_vuc_id': request.args.get('khu_vuc_id'), 'xa_id': request.args.get('xa_id')} %}
+                        <a href="{{ url_for('main.dashboard_page', time_range='7d', **other_args) }}" class="btn btn-outline-primary {% if active_time_range == '7d' %}active{% endif %}">7 ngày</a>
+                        <a href="{{ url_for('main.dashboard_page', time_range='30d', **other_args) }}" class="btn btn-outline-primary {% if active_time_range == '30d' %}active{% endif %}">30 ngày</a>
+                        <a href="{{ url_for('main.dashboard_page', time_range='this_year', **other_args) }}" class="btn btn-outline-primary {% if active_time_range == 'this_year' %}active{% endif %}">Năm nay</a>
+                    </div>
+                </div>
+
+                <!-- Lọc theo bệnh -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="disease_filter" class="form-label fw-semibold">Loại bệnh</label>
+                    <select class="form-select" name="disease" id="disease_filter">
+                        <option value="Tất cả" {% if active_disease == 'Tất cả' %}selected{% endif %}>Tất cả các bệnh</option>
+                        {% for disease in disease_list %}
+                        <option value="{{ disease }}" {% if active_disease == disease %}selected{% endif %}>{{ disease }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Lọc theo địa chỉ (ĐỘNG) -->
+                {% if session.get('role') == 'admin' %}
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label fw-semibold">Khu vực</label>
+                    <select class="form-select" name="khu_vuc_id" id="khu_vuc_select">
+                        <option value="">-- Tất cả khu vực --</option>
+                        {% for kv in filter_data.khu_vuc_list %}
+                            <option value="{{ kv.id }}" {% if request.args.get('khu_vuc_id') == kv.id|string %}selected{% endif %}>{{ kv.ten_don_vi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label fw-semibold">Xã/Phường</label>
+                    <select class="form-select" name="xa_id" id="xa_select">
+                        <option value="">-- Tất cả Xã/Phường --</option>
+                        {% for xa in filter_data.xa_list %}
+                            <option value="{{ xa.id }}" data-parent-id="{{ xa.parent_id }}" {% if request.args.get('xa_id') == xa.id|string %}selected{% endif %}>{{ xa.ten_don_vi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <!-- Nút Lọc -->
+                <div class="col-lg-2 col-md-4">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-filter me-2"></i>Áp dụng</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- CÁC BIỂU ĐỒ (Mỗi biểu đồ 1 hàng) -->
+<div class="row">
+    <!-- Biểu đồ 1: Số ca theo tuần -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light"><h5 class="card-title mb-0 fw-bold"><i class="bi bi-bar-chart-line-fill me-2"></i>Diễn biến số ca mắc theo tuần</h5></div>
+            <div class="card-body">
+                <div id="casesByWeekChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 2: Top 5 bệnh -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light"><h5 class="card-title mb-0 fw-bold"><i class="bi bi-trophy-fill me-2"></i>Top 5 bệnh mắc cao nhất</h5></div>
+            <div class="card-body pb-0">
+                <div id="topDiseasesChart" style="height:350px;"></div>
+            </div>
+            <div class="card-footer">
+                <div class="table-responsive" style="max-height: 200px;">
+                    <table class="table table-sm table-striped table-hover mb-0">
+                        <thead><tr><th>Tên bệnh</th><th class="text-end">Số ca mắc</th></tr></thead>
+                        <tbody>
+                            {% for row in top_diseases_data %}
+                            <tr><td>{{ row.chan_doan_chinh }}</td><td class="text-end">{{ row.so_ca_mac }}</td></tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center">Không có dữ liệu.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ 3: Biểu đồ tròn -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light"><h5 class="card-title mb-0 fw-bold"><i class="bi bi-pie-chart-fill me-2"></i>Cơ cấu bệnh</h5></div>
+            <div class="card-body">
+                <div id="diseasePieChart" style="height:450px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+<script>
+    // Hàm vẽ biểu đồ Plotly (giữ nguyên)
+    function drawPlotlyChart(elementId, graphData) {
+        if (graphData && graphData.data && graphData.layout) {
+            Plotly.newPlot(elementId, graphData.data, graphData.layout, {responsive: true, displaylogo: false});
+        } else {
+            const el = document.getElementById(elementId);
+            if(el) el.innerHTML = '<div class="alert alert-light text-center m-5">Không có dữ liệu để hiển thị cho biểu đồ này.</div>';
+        }
+    }
+
+    drawPlotlyChart('casesByWeekChart', {{ cases_by_week_chart_json | safe }});
+    drawPlotlyChart('topDiseasesChart', {{ top_diseases_chart_json | safe }});
+    drawPlotlyChart('diseasePieChart', {{ disease_pie_chart_json | safe }});
+
+    // Script cho dropdown địa chỉ động (nếu là admin)
+    document.addEventListener('DOMContentLoaded', function () {
+        const khuVucSelect = document.getElementById('khu_vuc_select');
+        const xaSelect = document.getElementById('xa_select');
+
+        if (!khuVucSelect || !xaSelect) return;
+
+        const allXaOptions = Array.from(xaSelect.options);
+
+        function filterXaOptions() {
+            const selectedKhuVucId = khuVucSelect.value;
+            const previouslySelectedXaId = "{{ request.args.get('xa_id', '') }}";
+            
+            while (xaSelect.options.length > 1) xaSelect.remove(1);
+
+            const optionsToShow = selectedKhuVucId 
+                ? allXaOptions.filter(option => option.dataset.parentId === selectedKhuVucId)
+                : allXaOptions.slice(1);
+            
+            optionsToShow.forEach(option => xaSelect.add(option.cloneNode(true)));
+
+            // Khôi phục lựa chọn xã trước đó nếu có
+            xaSelect.value = previouslySelectedXaId;
+            if (xaSelect.selectedIndex === -1) xaSelect.selectedIndex = 0;
+        }
+
+        filterXaOptions();
+        khuVucSelect.addEventListener('change', filterXaOptions);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG VÀ NÚT HÀNH ĐỘNG CHÍNH -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-people-fill me-2"></i>Quản lý Người dùng</h1>
+        <p class="text-muted mb-0">Tạo, tìm kiếm và quản lý tài khoản người dùng trong hệ thống.</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group shadow-sm">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-person-plus-fill me-2"></i> Thêm Người dùng
+            </button>
+            <a href="{{ url_for('admin.export_users') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i> Xuất Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- BẢNG DỮ LIỆU VÀ BỘ LỌC -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('admin.manage_users') }}">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="ten_dang_nhap" placeholder="Tìm theo tên đăng nhập..." value="{{ request.args.get('ten_dang_nhap', '') }}">
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                     <select class="form-select" name="quyen_han" onchange="this.form.submit()">
+                        <option value="">-- Lọc theo quyền --</option>
+                        <option value="admin" {% if request.args.get('quyen_han') == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="khuvuc" {% if request.args.get('quyen_han') == 'khuvuc' %}selected{% endif %}>Khu vực</option>
+                        <option value="xa" {% if request.args.get('quyen_han') == 'xa' %}selected{% endif %}>Xã</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 d-flex">
+                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary ms-2" title="Xóa bộ lọc"><i class="bi bi-x-lg"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Tên đăng nhập</th>
+                        <th scope="col">Quyền hạn</th>
+                        <th scope="col">Đơn vị</th>
+                        <th scope="col" class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users_list %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td><strong>{{ user.ten_dang_nhap }}</strong></td>
+                        <td>
+                            {% if user.quyen_han == 'admin' %}<span class="badge text-bg-danger"><i class="bi bi-shield-lock-fill me-1"></i> Admin</span>
+                            {% elif user.quyen_han == 'khuvuc' %}<span class="badge text-bg-success"><i class="bi bi-collection-fill me-1"></i> Khu vực</span>
+                            {% elif user.quyen_han == 'xa' %}<span class="badge text-bg-warning"><i class="bi bi-geo-alt-fill me-1"></i> Xã</span>
+                            {% else %}<span class="badge text-bg-secondary">{{ user.quyen_han }}</span>{% endif %}
+                        </td>
+                        <td class="text-muted">{{ user.don_vi.ten_don_vi if user.don_vi else '—' }}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-warning" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                            {% if user.id != session.get('user_id') %}
+                            <form action="{{ url_for('admin.delete_user_action', user_id=user.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng `{{ user.ten_dang_nhap }}`?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                             <div class="text-center text-muted p-5">
+                                <i class="bi bi-person-x" style="font-size: 3rem;"></i>
+                                <h5 class="mt-2">Không tìm thấy người dùng nào</h5>
+                                <p>Hãy thử thay đổi bộ lọc hoặc thêm một người dùng mới.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if pagination and pagination.total_pages > 1 %}
+    <div class="card-footer">
+        {% include '_pagination.html' %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- MODAL THÊM NGƯỜI DÙNG MỚI -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Tạo tài khoản mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.manage_users') }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ten_dang_nhap" class="form-label fw-semibold">Tên đăng nhập (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" name="ten_dang_nhap" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mat_khau" class="form-label fw-semibold">Mật khẩu (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control" name="mat_khau" required>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="don_vi_id" class="form-label fw-semibold">Gán cho Đơn vị (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                <select class="form-select" name="don_vi_id" required>
+                                    <option value="" disabled selected>-- Chọn đơn vị (Tỉnh/Khu vực/Xã) --</option>
+                                    {% for dv in don_vi_list %}
+                                        {% if dv.cap_don_vi != 'Ấp' %}
+                                        <option value="{{ dv.id }}">{{ dv.ten_don_vi }} (Cấp: {{ dv.cap_don_vi }})</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-text">Quyền hạn của người dùng sẽ tự động được gán dựa trên cấp của đơn vị được chọn.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-2"></i>Tạo người dùng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

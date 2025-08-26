@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-person-gear"></i> Sửa Người dùng: {{ user.ten_dang_nhap }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">Cập nhật thông tin</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input type="text" class="form-control" value="{{ user.ten_dang_nhap }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="don_vi_id" class="form-label">Gán cho Đơn vị</label>
+                        <select class="form-select" name="don_vi_id" required>
+                            {% for dv in don_vi_list %}
+                                {% if dv.cap_don_vi != 'Ấp' %}
+                                <option value="{{ dv.id }}" {% if dv.id == user.don_vi_id %}selected{% endif %}>
+                                    {{ dv.ten_don_vi }} ({{ dv.cap_don_vi }})
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">Đặt lại mật khẩu</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+                     <div class="mb-3">
+                        <label for="new_password" class="form-label">Mật khẩu mới</label>
+                        <input type="password" class="form-control" name="new_password" required minlength="6" placeholder="Nhập ít nhất 6 ký tự">
+                    </div>
+                    <input type="hidden" name="reset_password" value="true">
+                    <button type="submit" class="btn btn-warning">Đặt lại mật khẩu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary mt-3"><i class="bi bi-arrow-left"></i> Quay lại Danh sách</a>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Thêm Ca bệnh mới</h1>
+        <p class="text-muted mb-0">Nhập thông tin chi tiết cho một ca bệnh mới vào hệ thống.</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('main.cases_page') }}?{{ current_query_string }}" class="btn btn-outline-secondary d-flex align-items-center">
+            <i class="bi bi-x-lg me-2"></i> Hủy
+        </a>
+    </div>
+</div>
+
+<!-- FORM NHẬP LIỆU -->
+<form method="POST" action="{{ url_for('main.new_case_page') }}">
+    <input type="hidden" name="query_string" value="{{ current_query_string }}">
+
+    <div class="row g-4">
+        <!-- CỘT TRÁI: FORM CHÍNH -->
+        <div class="col-lg-8">
+            <!-- Card 1: Thông tin bệnh nhân -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">1</span>Thông tin Bệnh nhân</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã số bệnh nhân (*)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                <input type="text" class="form-control" name="ma_so_benh_nhan" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Họ và tên (*)</label>
+                             <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="form-control" name="ho_ten" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày sinh</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" class="form-control" name="ngay_sinh">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giới tính</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+                                <select class="form-select" name="gioi_tinh">
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Thông tin bệnh án & dịch tễ -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">2</span>Thông tin Bệnh án & Dịch tễ</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% if session.get('role') == 'admin' %}
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Xã (*)</label>
+                            <select class="form-select" name="xa_id" id="xa_select" required>
+                                <option value="" disabled selected>-- Chọn xã --</option>
+                                {% for xa in xa_list_js %}<option value="{{ xa.id }}">{{ xa.ten_don_vi }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ấp/Tổ</label>
+                            <select class="form-select" name="dia_chi_ap" id="ap_select"><option value="">-- Chọn ấp/tổ --</option></select>
+                        </div>
+                        {% else %}
+                        <div class="col-md-12">
+                             <label class="form-label fw-semibold">Ấp/Tổ</label>
+                            <select class="form-select" name="dia_chi_ap" id="ap_select"><option value="">-- Vui lòng chọn --</option></select>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Địa chỉ chi tiết (Số nhà, tên đường...)</label>
+                            <input type="text" class="form-control" name="dia_chi_chi_tiet">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày khởi phát (*)</label>
+                            <input type="date" class="form-control" name="ngay_khoi_phat" required>
+                        </div>
+
+                        <!-- === THAY ĐỔI 1: CHUYỂN THÀNH DROPDOWN === -->
+                        <div class="col-md-6">
+                            <label for="chan_doan_chinh" class="form-label fw-semibold">Chẩn đoán chính (*)</label>
+                            <select class="form-select" id="chan_doan_chinh" name="chan_doan_chinh" required>
+                                <option value="" disabled selected>-- Chọn chẩn đoán --</option>
+                                {% for chan_doan in case_options.chan_doan_chinh %}
+                                <option value="{{ chan_doan }}">{{ chan_doan }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phan_do_benh" class="form-label fw-semibold">Phân độ bệnh</label>
+                            <select class="form-select" id="phan_do_benh" name="phan_do_benh" disabled>
+                                <option value="">-- Chọn phân độ (nếu có) --</option>
+                                <!-- Các option sẽ được thêm bằng JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tinh_trang_hien_nay" class="form-label fw-semibold">Tình trạng hiện nay</label>
+                            <select class="form-select" id="tinh_trang_hien_nay" name="tinh_trang_hien_nay">
+                                <option value="">-- Chọn tình trạng --</option>
+                                {% for tinh_trang in case_options.tinh_trang_hien_nay %}
+                                <option value="{{ tinh_trang }}">{{ tinh_trang }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- === KẾT THÚC THAY ĐỔI 1 === -->
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Thuộc ổ dịch (nếu có)</label>
+                            <select class="form-select" name="o_dich_id" id="odich_select" disabled>
+                                <option value="">-- Không thuộc ổ dịch nào --</option>
+                                {# JavaScript sẽ điền vào đây #}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Nút Lưu -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                    <i class="bi bi-check-circle-fill me-2"></i>Lưu ca bệnh
+                </button>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: HƯỚNG DẪN -->
+        <div class="col-lg-4">
+             <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <h5 class="fw-bold text-secondary"><i class="bi bi-lightbulb-fill me-2"></i>Lưu ý khi nhập liệu</h5>
+                    <hr>
+                    <p class="small text-muted">
+                        <i class="bi bi-check-circle text-success me-1"></i> Các trường có dấu (*) là bắt buộc.
+                    </p>
+                    <p class="small text-muted">
+                        <i class="bi bi-check-circle text-success me-1"></i> <strong>Mã số bệnh nhân</strong> cùng <strong>Ngày khởi phát</strong> và <strong>Chẩn đoán</strong> phải là duy nhất.
+                    </p>
+                    <p class="small text-muted">
+                        <i class="bi bi-check-circle text-success me-1"></i> Danh sách <strong>Ấp/Tổ</strong> và <strong>Ổ dịch</strong> sẽ tự động cập nhật sau khi bạn chọn Xã.
+                    </p>
+                     <p class="small text-muted">
+                        <i class="bi bi-check-circle text-success me-1"></i> Kiểm tra kỹ thông tin trước khi nhấn "Lưu ca bệnh".
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .fw-semibold { font-weight: 600 !important; }
+</style>
+
+<!-- === THAY ĐỔI 2: THÊM BLOCK SCRIPT VÀO CUỐI === -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Logic JavaScript cho dropdown động Xã -> Ấp/Ổ dịch
+document.addEventListener('DOMContentLoaded', function() {
+    const xaSelect = document.getElementById('xa_select');
+    const apSelect = document.getElementById('ap_select');
+    const odichSelect = document.getElementById('odich_select');
+    const apList = {{ ap_list_js|tojson|safe }};
+    const odichList = {{ odich_list_js|tojson|safe }};
+    const userXaId = "{{ session.get('don_vi_id') if session.get('role') == 'xa' else '' }}";
+
+    function updateApOptions(selectedXaId) {
+        apSelect.innerHTML = '<option value="">-- Chọn ấp/tổ --</option>';
+        if (!selectedXaId) return;
+        apList.forEach(ap => {
+            if (ap.parent_id && ap.parent_id.toString() === selectedXaId) {
+                const option = document.createElement('option');
+                option.value = ap.ten_don_vi;
+                option.textContent = ap.ten_don_vi;
+                apSelect.appendChild(option);
+            }
+        });
+    }
+    
+    function updateODichOptions(selectedXaId) {
+        odichSelect.innerHTML = '<option value="">-- Không thuộc ổ dịch nào --</option>';
+        odichSelect.disabled = true; // Vô hiệu hóa mặc định
+        if (!selectedXaId) return;
+
+        const filteredOdich = odichList.filter(od => od.xa_id && od.xa_id.toString() === selectedXaId);
+        if(filteredOdich.length > 0){
+            odichSelect.disabled = false; // Kích hoạt nếu có ổ dịch
+            filteredOdich.forEach(od => {
+                const option = document.createElement('option');
+                option.value = od.id;
+                option.textContent = od.display;
+                odichSelect.appendChild(option);
+            });
+        }
+    }
+
+    if (xaSelect) {
+        xaSelect.addEventListener('change', function() {
+            const selectedXaId = this.value;
+            updateApOptions(selectedXaId);
+            updateODichOptions(selectedXaId);
+        });
+        // Kích hoạt khi tải trang (cho admin)
+        if(xaSelect.value){
+            updateApOptions(xaSelect.value);
+            updateODichOptions(xaSelect.value);
+        }
+    }
+    
+    if (userXaId) { // Dành cho user cấp xã
+        updateApOptions(userXaId);
+        updateODichOptions(userXaId);
+    }
+});
+</script>
+
+<script>
+// Logic JavaScript cho dropdown động Chẩn đoán -> Phân độ
+document.addEventListener('DOMContentLoaded', function() {
+    const chanDoanSelect = document.getElementById('chan_doan_chinh');
+    const phanDoSelect = document.getElementById('phan_do_benh');
+    const phanDoOptionsData = {{ case_options.phan_do_benh | tojson | safe }};
+
+    function updatePhanDoOptions() {
+        const selectedChanDoan = chanDoanSelect.value;
+        phanDoSelect.innerHTML = '<option value="">-- Chọn phân độ (nếu có) --</option>';
+
+        if (phanDoOptionsData[selectedChanDoan]) {
+            const options = phanDoOptionsData[selectedChanDoan];
+            options.forEach(function(optionValue) {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                phanDoSelect.appendChild(option);
+            });
+            phanDoSelect.disabled = false;
+        } else {
+            phanDoSelect.disabled = true;
+        }
+    }
+
+    chanDoanSelect.addEventListener('change', updatePhanDoOptions);
+    updatePhanDoOptions(); 
+});
+</script>
+{% endblock %}

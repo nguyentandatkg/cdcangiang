@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- TIÊU ĐỀ TRANG VÀ NÚT HÀNH ĐỘNG CHÍNH -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold"><i class="bi bi-buildings-fill me-2"></i>Quản lý Đơn vị Hành chính</h1>
+        <p class="text-muted mb-0">Thêm, sửa, xóa và tìm kiếm các đơn vị trong hệ thống.</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addDonViModal">
+            <i class="bi bi-plus-circle me-2"></i> Thêm Đơn vị mới
+        </button>
+    </div>
+</div>
+
+<!-- BẢNG DỮ LIỆU VÀ BỘ LỌC -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light">
+        <form method="GET" action="{{ url_for('admin.manage_don_vi') }}">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" name="ten_don_vi" placeholder="Tìm theo tên đơn vị..." value="{{ request.args.get('ten_don_vi', '') }}">
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                     <select class="form-select" name="cap_don_vi" onchange="this.form.submit()">
+                        <option value="Tất cả" {% if filters.cap_don_vi == 'Tất cả' %}selected{% endif %}>-- Lọc theo cấp --</option>
+                        <option value="Tỉnh" {% if filters.cap_don_vi == 'Tỉnh' %}selected{% endif %}>Tỉnh</option>
+                        <option value="Khu vực" {% if filters.cap_don_vi == 'Khu vực' %}selected{% endif %}>Khu vực</option>
+                        <option value="Xã" {% if filters.cap_don_vi == 'Xã' %}selected{% endif %}>Xã</option>
+                        <option value="Ấp" {% if filters.cap_don_vi == 'Ấp' %}selected{% endif %}>Ấp</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 d-flex">
+                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                    <a href="{{ url_for('admin.manage_don_vi') }}" class="btn btn-secondary ms-2" title="Xóa bộ lọc"><i class="bi bi-x-lg"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Tên Đơn vị</th>
+                        <th scope="col">Cấp</th>
+                        <th scope="col">Đơn vị cha</th>
+                        <th scope="col" class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dv in don_vi_list %}
+                    <tr>
+                        <td>{{ dv.id }}</td>
+                        <td><strong>{{ dv.ten_don_vi }}</strong></td>
+                        <td>
+                            {% if dv.cap_don_vi == 'Tỉnh' %}<span class="badge text-bg-primary">{{ dv.cap_don_vi }}</span>
+                            {% elif dv.cap_don_vi == 'Khu vực' %}<span class="badge text-bg-success">{{ dv.cap_don_vi }}</span>
+                            {% elif dv.cap_don_vi == 'Xã' %}<span class="badge text-bg-warning">{{ dv.cap_don_vi }}</span>
+                            {% elif dv.cap_don_vi == 'Ấp' %}<span class="badge text-bg-secondary">{{ dv.cap_don_vi }}</span>
+                            {% else %}{{ dv.cap_don_vi }}{% endif %}
+                        </td>
+                        <td class="text-muted">{{ dv.parent.ten_don_vi if dv.parent else '—' }}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                            <a href="{{ url_for('admin.edit_don_vi', don_vi_id=dv.id) }}" class="btn btn-sm btn-outline-warning" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                            <form action="{{ url_for('admin.delete_don_vi_action', don_vi_id=dv.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đơn vị này không?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="text-center text-muted p-5">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <h5 class="mt-2">Không tìm thấy đơn vị nào</h5>
+                                <p>Hãy thử thay đổi bộ lọc hoặc thêm một đơn vị mới.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if pagination and pagination.total_pages > 1 %}
+    <div class="card-footer">
+        {% include '_pagination.html' %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- MODAL THÊM ĐƠN VỊ MỚI -->
+<div class="modal fade" id="addDonViModal" tabindex="-1" aria-labelledby="addDonViModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDonViModalLabel"><i class="bi bi-plus-circle-dotted me-2"></i>Thêm đơn vị hành chính mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-don-vi-form" method="POST" action="{{ url_for('admin.manage_don_vi') }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="cap_don_vi" class="form-label fw-semibold">Cấp đơn vị (*)</label>
+                            <select class="form-select" id="cap_don_vi" name="cap_don_vi" required>
+                                <option value="" disabled selected>-- Chọn cấp --</option>
+                                <option value="Khu vực">Khu vực</option>
+                                <option value="Xã">Xã</option>
+                                <option value="Ấp">Ấp</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="parent_id" class="form-label fw-semibold">Thuộc đơn vị cha (*)</label>
+                            <select class="form-select" id="parent_id" name="parent_id" required>
+                                <option value="">-- Vui lòng chọn Cấp đơn vị trước --</option>
+                            </select>
+                        </div>
+                         <div class="col-md-12">
+                            <label for="ten_don_vi" class="form-label fw-semibold">Tên đơn vị mới (*)</label>
+                            <input type="text" class="form-control" name="ten_don_vi" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-2"></i>Thêm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const allUnits = {{ don_vi_data_for_js|tojson }};
+    const capSelect = document.getElementById('cap_don_vi');
+    const parentSelect = document.getElementById('parent_id');
+    const parentMap = {'Khu vực': 'Tỉnh', 'Xã': 'Khu vực', 'Ấp': 'Xã'};
+
+    function updateParentOptions() {
+        const selectedCap = capSelect.value;
+        const parentLevel = parentMap[selectedCap];
+        parentSelect.innerHTML = '<option value="" disabled selected>-- Chọn đơn vị cha --</option>';
+        
+        if (!parentLevel) {
+            parentSelect.innerHTML = '<option value="">-- Vui lòng chọn Cấp đơn vị --</option>';
+            return;
+        }
+
+        const filteredUnits = allUnits.filter(unit => unit.cap_don_vi === parentLevel);
+
+        if (filteredUnits.length > 0) {
+            filteredUnits.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.id;
+                option.textContent = `${unit.ten_don_vi} (ID: ${unit.id})`;
+                parentSelect.appendChild(option);
+            });
+        } else {
+             parentSelect.innerHTML = `<option value="">-- Không tìm thấy đơn vị cấp ${parentLevel} --</option>`;
+        }
+    }
+    
+    capSelect.addEventListener('change', updateParentOptions);
+});
+</script>
+{% endblock %}
