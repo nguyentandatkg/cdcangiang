@@ -37,7 +37,6 @@ from webapp.core.admin_utils import (
 )
 from webapp.core.utils import get_all_child_xa_ids
 from webapp.core.forms import ChangePasswordForm
-from webapp.core.report_generator import generate_cases_export
 from webapp import cache # <<< THÊM DÒNG NÀY
 
 main_bp = Blueprint('main', __name__)
