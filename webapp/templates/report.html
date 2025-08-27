@@ -27,7 +27,7 @@
       <div class="row g-0">
         <!-- CỘT TRÁI -->
         <div class="col-lg-5 p-4">
-          <h5 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-event me-2"></i>1. Báo cáo định kỳ</h5>
+          <h5 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-event me-2"></i>1. Báo cáo tùy ch</h5>
           <hr class="mt-0">
           <form method="POST" action="{{ url_for('main.report_page') }}">
               <!-- Mẫu báo cáo -->
@@ -38,15 +38,15 @@
                       <select class="form-select" id="report_template" name="report_template" required>
                           <option value="" disabled selected>-- Vui lòng chọn một mẫu --</option>
                           <optgroup label="Báo cáo Tuần">
-                              <option value="Báo cáo Bệnh truyền nhiễm tổng hợp">Bệnh truyền nhiễm (Tổng hợp)</option>
+                              <option value="Báo cáo Bệnh truyền nhiễm tổng hợp">Bệnh truyền nhiễm</option>
                               <option value="Báo cáo Sốt Xuất Huyết">Ca mắc chết Sốt xuất huyết</option>
                               <option value="Báo cáo Ổ dịch SXH">Ổ dịch Sốt xuất huyết</option>
                               <option value="Báo cáo Ổ dịch TCM">Ổ dịch Tay chân miệng</option>
                               <option value="Tất cả báo cáo (Tuần)">Tất cả báo cáo (Tuần)</option>  
                           </optgroup>
                           <optgroup label="Báo cáo Tháng">
-                              <option value="Báo cáo BTN theo tháng">Bệnh truyền nhiễm (Theo tháng)</option>
-                              <option value="Báo cáo SXH theo tháng">Sốt xuất huyết (Theo tháng)</option>
+                              <option value="Báo cáo BTN theo tháng">Bệnh truyền nhiễm</option>
+                              <option value="Báo cáo SXH theo tháng">Sốt xuất huyết</option>
                               <option value="Tất cả báo cáo (Tháng)">Tất cả báo cáo (Tháng)</option>
                           </optgroup>
                       </select>
@@ -127,7 +127,7 @@
       <div class="row g-0">
         <!-- CỘT TRÁI -->
         <div class="col-lg-5 p-4">
-          <h5 class="fw-bold text-success mb-3"><i class="bi bi-sliders me-2"></i>Báo cáo Bệnh Truyền Nhiễm Tùy chỉnh</h5>
+          <h5 class="fw-bold text-success mb-3"><i class="bi bi-sliders me-2"></i>Báo cáo tùy chỉnh</h5>
           <hr class="mt-0">
           <form method="POST" action="{{ url_for('main.custom_btn_report_action') }}">
               <div class="row mb-3">
