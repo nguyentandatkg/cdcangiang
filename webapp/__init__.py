@@ -1,7 +1,16 @@
 # file: webapp/__init__.py
 from flask import Flask
 import os
-from datetime import datetime # <<< THÊM DÒNG NÀY ĐỂ IMPORT datetime
+from datetime import datetime
+from flask_caching import Cache # <<< THÊM DÒNG NÀY
+
+# <<< THÊM CÁC DÒNG NÀY ĐỂ KHỞI TẠO CACHE
+# Sử dụng 'SimpleCache' cho môi trường phát triển. 
+# Khi triển khai thực tế, nên cân nhắc dùng 'RedisCache' hoặc 'MemcachedCache'.
+cache = Cache(config={
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 300 # Thời gian cache mặc định là 300 giây (5 phút)
+})
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
@@ -12,6 +21,8 @@ def create_app():
     app.config['REPORT_FOLDER'] = os.path.join(app.instance_path, 'reports')
     os.makedirs(app.config['REPORT_FOLDER'], exist_ok=True)
     
+    cache.init_app(app) # <<< THÊM DÒNG NÀY ĐỂ KẾT NỐI CACHE VỚI APP
+
     # THÊM ĐOẠN CODE NÀY ĐỂ INJECT BIẾN 'now' VÀO MỌI TEMPLATE
     # Đặt nó sau khi 'app' được tạo, và trước khi 'app' được trả về.
     @app.context_processor

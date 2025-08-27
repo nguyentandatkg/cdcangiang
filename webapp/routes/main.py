@@ -37,6 +37,8 @@ from webapp.core.admin_utils import (
 )
 from webapp.core.utils import get_all_child_xa_ids
 from webapp.core.forms import ChangePasswordForm
+from webapp.core.report_generator import generate_cases_export
+from webapp import cache # <<< THÊM DÒNG NÀY
 
 main_bp = Blueprint('main', __name__)
 
@@ -175,6 +177,7 @@ def home_page():
     return redirect(url_for('main.dashboard_page'))
 
 @main_bp.route('/dashboard')
+@cache.cached(timeout=300, query_string=True) # <<< THÊM DECORATOR NÀY
 def dashboard_page():
     user_don_vi = g.user_don_vi
     db = g.db
@@ -546,6 +549,58 @@ def cases_page():
         current_query_string=current_query_string # <-- TRUYỀN BIẾN MỚI NÀY VÀO TEMPLATE
     )
 
+@main_bp.route('/cases/export', methods=['GET'])
+def export_cases():
+    """
+    Xuất danh sách ca bệnh ra file Excel.
+    Chỉ cho phép admin và user cấp khu vực truy cập.
+    """
+    if session.get('role') not in ['admin', 'khuvuc']:
+        return jsonify({'error': 'Không có quyền truy cập'}), 403
+
+    db = g.db
+    user_don_vi = g.user_don_vi
+
+    # Lấy tất cả các tham số lọc từ URL
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    chan_doan = request.args.get('chan_doan', '')
+    ho_ten = request.args.get('ho_ten', '')
+    khu_vuc_id_str = request.args.get('khu_vuc_id', '')
+    xa_id_str = request.args.get('xa_id', '')
+    dia_chi_ap = request.args.get('dia_chi_ap', '')
+
+    # Chuyển đổi và tạo dictionary filters để truy vấn
+    filters = {
+        'chan_doan': chan_doan,
+        'ho_ten': ho_ten,
+        'khu_vuc_id': int(khu_vuc_id_str) if khu_vuc_id_str.isdigit() else None,
+        'xa_id': int(xa_id_str) if xa_id_str.isdigit() else None,
+        'dia_chi_ap': dia_chi_ap,
+    }
+    try:
+        if start_date_str: filters['start_date'] = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        if end_date_str: filters['end_date'] = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        filters.pop('start_date', None)
+        filters.pop('end_date', None)
+
+    # Lấy danh sách ca bệnh theo quyền của người dùng
+    cases, _ = get_cases_by_user_scope(user_don_vi, filters, page=1, per_page=10000)
+
+    # Tạo file Excel và gửi về cho người dùng
+    try:
+        output = generate_cases_export(cases)
+        response = send_file(
+            output,
+            as_attachment=True,
+            download_name=f'danh_sach_ca_benh_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        )
+        return response
+    except Exception as e:
+        current_app.logger.error(f"Lỗi xuất Excel: {e}")
+        return jsonify({'error': 'Đã có lỗi xảy ra khi xuất file Excel.'}), 500
+
 @main_bp.route('/cases/new', methods=['GET', 'POST'])
 def new_case_page():
     if session.get('role') not in ['admin', 'khuvuc']:
@@ -669,10 +724,10 @@ def edit_case_page(case_id):
     current_query_string = request.query_string.decode('utf-8')
         
     return render_template(
-        'edit_case.html', 
-        title='Sửa Ca bệnh', 
-        case=case, 
-        ap_list=ap_list, 
+        'edit_case.html',
+        title='Sửa Ca bệnh',
+        case=case,
+        ap_list=ap_list,
         odich_list=odich_list,
         current_query_string=current_query_string, # <-- Truyền vào template
         case_options=CASE_OPTIONS
@@ -759,7 +814,7 @@ def manage_odich_page():
     
     # --- BƯỚC 1: XÁC ĐỊNH PHẠM VI DỮ LIỆU BAN ĐẦU CỦA USER ---
     xa_ids_in_scope = get_all_child_xa_ids(user_don_vi)
-    query = db.query(O_Dich).filter(O_Dich.xa_id.in_(xa_ids_in_scope))
+    query = db.query(O_Dich).options(joinedload(O_Dich.don_vi)).filter(O_Dich.xa_id.in_(xa_ids_in_scope))
 
     # --- BƯỚC 2: ĐỌC VÀ ÁP DỤNG CÁC BỘ LỌC TỪ URL ---
     page = request.args.get('page', 1, type=int)

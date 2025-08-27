@@ -36,7 +36,7 @@ class NguoiDung(Base):
     ten_dang_nhap = Column(String(100), nullable=False, unique=True)
     email = Column(String(120), unique=True, nullable=True)
     mat_khau_hashed = Column(String(250), nullable=False)
-    quyen_han = Column(String(50), default='xa') 
+    quyen_han = Column(String(50), default='xa', index=True) # <<< THÊM INDEX
     don_vi_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'))
     
     don_vi = relationship("DonViHanhChinh", back_populates="nguoi_dung")
@@ -53,7 +53,7 @@ class O_Dich(Base):
     dia_chi_ap = Column(String(250))
     # =======================================================
 
-    xa_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'), nullable=False)
+    xa_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'), nullable=False, index=True) # <<< THÊM INDEX
     don_vi = relationship("DonViHanhChinh", back_populates="o_dich")
     ca_benh_lien_quan = relationship("CaBenh", back_populates="o_dich")
     
@@ -73,7 +73,7 @@ class CaBenh(Base):
     # === THAY ĐỔI 2: Bỏ unique=True ở đây ===
     ma_so_benh_nhan = Column(String(100), nullable=False, index=True)
     
-    ho_ten = Column(String(250))
+    ho_ten = Column(String(250), index=True) # <<< THÊM INDEX
     ngay_sinh = Column(Date)
     gioi_tinh = Column(String(10))
     dia_chi_chi_tiet = Column(Text)
@@ -89,10 +89,10 @@ class CaBenh(Base):
     tinh_trang_hien_nay = Column(String(100))
     ngay_import = Column(Date, default=date.today)
     
-    xa_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'), nullable=False)
+    xa_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'), nullable=False, index=True) # <<< THÊM INDEX
     don_vi = relationship("DonViHanhChinh", back_populates="ca_benh")
     
-    o_dich_id = Column(Integer, ForeignKey('o_dich.id'), nullable=True)
+    o_dich_id = Column(Integer, ForeignKey('o_dich.id'), nullable=True, index=True) # <<< THÊM INDEX
     o_dich = relationship("O_Dich", back_populates="ca_benh_lien_quan")
 
     # === THAY ĐỔI 3: Thêm ràng buộc UNIQUE kết hợp ở cấp độ bảng ===
