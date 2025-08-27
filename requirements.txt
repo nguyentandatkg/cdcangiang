@@ -77,3 +77,4 @@ wsproto==1.2.0
 WTForms==3.2.1
 xlsxwriter==3.2.5
 xyzservices==2025.4.0
+flask_caching
