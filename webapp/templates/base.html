@@ -4,101 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title | default('Hệ thống Bệnh truyền nhiễm') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    {# --- BLOCK HEAD ĐÃ ĐƯỢC THÊM VÀO ĐÂY --- #}
+    {% block head %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-<style>
-    body {
-        padding-top: 5rem;
-        background-color: #f4f7f6;
-        color: #212529;
-        transition: background-color 0.3s, color 0.3s;
-        min-height: 100vh; /* Đảm bảo body đủ cao để footer xuống cuối */
-        display: flex;
-        flex-direction: column;
-    }
+        <style>
+            body {
+                padding-top: 5rem;
+                background-color: #f4f7f6;
+                color: #212529;
+                transition: background-color 0.3s, color 0.3s;
+                min-height: 100vh; /* Đảm bảo body đủ cao để footer xuống cuối */
+                display: flex;
+                flex-direction: column;
+            }
 
-    /* Navbar */
-    .navbar {
-        background: rgba(0, 109, 119, 0.85);
-        backdrop-filter: blur(6px);
-        transition: background-color 0.4s, box-shadow 0.3s;
-    }
-    .navbar.scrolled {
-        background-color: #006d77 !important;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-    }
-    .navbar-brand {
-        color: #ffffff !important;
-        font-size: 1.3rem;
-        letter-spacing: 0.5px;
-    }
-    .navbar-brand:hover {
-        color: #83c5be !important;
-    }
-    .nav-link {
-        color: #e6f2f1 !important;
-        transition: color 0.2s, transform 0.2s, text-shadow 0.2s;
-    }
-    .nav-link:hover {
-        color: #83c5be !important;
-        transform: translateY(-2px);
-        text-shadow: 0 0 4px rgba(0,0,0,0.2);
-    }
-    .btn-mode {
-        border: none;
-        background: transparent;
-    }
-    .cdc-logo-navbar { /* Style cho logo trên navbar */
-        height: 40px; /* Chiều cao cố định */
-        margin-right: 0.75rem;
-        border-radius: 5px; /* Bo tròn nhẹ các góc của logo */
-    }
+            /* Navbar */
+            .navbar {
+                background: rgba(0, 109, 119, 0.85);
+                backdrop-filter: blur(6px);
+                transition: background-color 0.4s, box-shadow 0.3s;
+            }
+            .navbar.scrolled {
+                background-color: #006d77 !important;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+            }
+            .navbar-brand {
+                color: #ffffff !important;
+                font-size: 1.3rem;
+                letter-spacing: 0.5px;
+            }
+            .navbar-brand:hover {
+                color: #83c5be !important;
+            }
+            .nav-link {
+                color: #e6f2f1 !important;
+                transition: color 0.2s, transform 0.2s, text-shadow 0.2s;
+            }
+            .nav-link:hover {
+                color: #83c5be !important;
+                transform: translateY(-2px);
+                text-shadow: 0 0 4px rgba(0,0,0,0.2);
+            }
+            .btn-mode {
+                border: none;
+                background: transparent;
+            }
+            .cdc-logo-navbar { /* Style cho logo trên navbar */
+                height: 40px; /* Chiều cao cố định */
+                margin-right: 0.75rem;
+                border-radius: 5px; /* Bo tròn nhẹ các góc của logo */
+            }
 
-    /* Loading Spinner */
-    #loadingOverlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(255,255,255,0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2000;
-        display: none;
-    }
-    body.dark-mode #loadingOverlay {
-         background: rgba(0,0,0,0.7);
-    }
+            /* Loading Spinner */
+            #loadingOverlay {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background: rgba(255,255,255,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                display: none;
+            }
+            body.dark-mode #loadingOverlay {
+                 background: rgba(0,0,0,0.7);
+            }
 
-    /* Main content flex grow to push footer down */
-    main.container {
-        flex-grow: 1;
-    }
+            /* Main content flex grow to push footer down */
+            main.container {
+                flex-grow: 1;
+            }
 
-    /* Footer Styles */
-    footer {
-        background-color: #e9ecef;
-        padding: 2rem 0;
-        margin-top: auto; /* Đẩy footer xuống cuối trang */
-        border-top: 1px solid #dee2e6;
-        color: #495057;
-        font-size: 0.9rem;
-    }
-    footer a {
-        color: #006d77;
-        text-decoration: none;
-    }
-    footer a:hover {
-        color: #004d55;
-        text-decoration: underline;
-    }
-    footer strong {
-        color: #006d77;
-    }
-
-  
-</style>
+            /* Footer Styles */
+            footer {
+                background-color: #e9ecef;
+                padding: 2rem 0;
+                margin-top: auto; /* Đẩy footer xuống cuối trang */
+                border-top: 1px solid #dee2e6;
+                color: #495057;
+                font-size: 0.9rem;
+            }
+            footer a {
+                color: #006d77;
+                text-decoration: none;
+            }
+            footer a:hover {
+                color: #004d55;
+                text-decoration: underline;
+            }
+            footer strong {
+                color: #006d77;
+            }
+        </style>
+    {% endblock head %}
 </head>
 <body>
     <!-- Loading Spinner -->
@@ -108,147 +110,142 @@
         </div>
     </div>
 
-<nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('main.cases_page') }}">
-            <!-- LOGO CDC AN GIANG -->
-            <img src="https://www.bing.com/th/id/OIP.CTFXYPiQ-YD0klDdHGp9KAHaHa?w=207&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2" alt="CDC An Giang Logo" class="cdc-logo-navbar">
-            <span>Hệ thống Quản lý bệnh truyền nhiễm</span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavDropdown">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard_page') }}"><i class="bi bi-graph-up"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.report_page') }}"><i class="bi bi-bar-chart-steps"></i> Báo cáo</a></li>
-                
-                {% if session.get('role') in ['admin', 'khuvuc'] %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.import_page') }}"><i class="bi bi-cloud-upload"></i> Import Dữ liệu</a></li>
-                {% endif %}
-                
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.cases_page') }}"><i class="bi bi-journal-medical"></i> Quản lý Ca bệnh</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.manage_odich_page') }}"><i class="bi bi-shield-exclamation"></i> Quản lý Ổ dịch</a></li>
-                {% if session.get('role') == 'admin' %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-gear"></i> Cài đặt </a></li>
-                {% endif %}
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item me-2">
-                    <button id="modeToggle" class="btn-mode text-dark" title="Chuyển chế độ"><i class="bi bi-moon-stars"></i></button>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle"></i> {{ session.get('username', 'Guest') }}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
-                        <li><a class="dropdown-item" href="{{ url_for('main.profile_page') }}"><i class="bi bi-person-badge"></i> Thông tin tài khoản</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
-                    </ul>
-                </li>
-            </ul>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('main.cases_page') }}">
+                <!-- LOGO CDC AN GIANG -->
+                <img src="https://www.bing.com/th/id/OIP.CTFXYPiQ-YD0klDdHGp9KAHaHa?w=207&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2" alt="CDC An Giang Logo" class="cdc-logo-navbar">
+                <span>Hệ thống Quản lý bệnh truyền nhiễm</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard_page') }}"><i class="bi bi-graph-up"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.report_page') }}"><i class="bi bi-bar-chart-steps"></i> Báo cáo</a></li>
+                    
+                    {% if session.get('role') in ['admin', 'khuvuc'] %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.import_page') }}"><i class="bi bi-cloud-upload"></i> Import Dữ liệu</a></li>
+                    {% endif %}
+                    
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.cases_page') }}"><i class="bi bi-journal-medical"></i> Quản lý Ca bệnh</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.manage_odich_page') }}"><i class="bi bi-shield-exclamation"></i> Quản lý Ổ dịch</a></li>
+                    {% if session.get('role') == 'admin' %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-gear"></i> Cài đặt </a></li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item me-2">
+                        <button id="modeToggle" class="btn-mode text-dark" title="Chuyển chế độ"><i class="bi bi-moon-stars"></i></button>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> {{ session.get('username', 'Guest') }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('main.profile_page') }}"><i class="bi bi-person-badge"></i> Thông tin tài khoản</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<main class="container mt-4">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-       <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
-       {% for category, msg_data in messages %}
-           <div class="toast align-items-center text-bg-{{ category }} border-0" role="alert">
-               <div class="d-flex">
-                   <div class="toast-body">
-                       {{ msg_data.message }}
-                   </div>
-                   <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-               </div>
-           </div>
-       {% endfor %}
-       </div>
-   {% endif %}
-   {% endwith %}
+    <main class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        {% for category, msg_data in messages %}
+            <div class="toast align-items-center text-bg-{{ category }} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ msg_data.message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
 
-{% block content %}{% endblock %}
-</main>
+    {% block content %}{% endblock %}
+    </main>
 
-<!-- ========================================================================= -->
-<!-- CHÂN TRANG (FOOTER) -->
-<!-- ========================================================================= -->
-<footer>
-    <div class="container text-center">
-        <p class="mb-1">
-            <strong>Trung tâm Kiểm soát bệnh tật tỉnh An Giang</strong> <br>
-            Địa chỉ: Lô D11, Phạm Hùng, Phường Rạch Giá, tỉnh An Giang <br>
-            Điện thoại: <a href="tel:02973 866229">02973 862153 </a> | 
-            Email: <a href="mailto:cdcskt@angiang.gov.vn">cdcskt@angiang.gov.vn</a>
-        </p>
-    </div>
-</footer>
-<!-- ========================================================================= -->
+    <footer>
+        <div class="container text-center">
+            <p class="mb-1">
+                <strong>Trung tâm Kiểm soát bệnh tật tỉnh An Giang</strong> <br>
+                Địa chỉ: Lô D11, Phạm Hùng, Phường Rạch Giá, tỉnh An Giang <br>
+                Điện thoại: <a href="tel:02973 866229">02973 862153 </a> | 
+                Email: <a href="mailto:cdcskt@angiang.gov.vn">cdcskt@angiang.gov.vn</a>
+            </p>
+        </div>
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Navbar đổi màu khi cuộn
-    window.addEventListener("scroll", function () {
-        const navbar = document.querySelector(".navbar");
-        const modeToggle = document.querySelector("#modeToggle");
-        if (window.scrollY > 50) {
-            navbar.classList.add("scrolled");
-            if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                modeToggle.classList.replace("text-dark", "text-light");
-            }
-        } else {
-            navbar.classList.remove("scrolled");
-            if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                modeToggle.classList.replace("text-light", "text-dark");
-            }
-        }
-    });
-
-    
-    
-    // Lưu trạng thái theme khi tải lại
-    window.addEventListener("DOMContentLoaded", () => {
-        if (localStorage.getItem("theme") === "dark") {
-            document.body.classList.add("dark-mode");
-            const icon = document.querySelector("#modeToggle i");
-            const modeToggle = document.querySelector("#modeToggle");
-            if(icon) icon.classList.replace("bi-moon-stars", "bi-brightness-high");
-            if(modeToggle) modeToggle.classList.replace("text-dark", "text-light"); // Đảm bảo icon luôn sáng trong dark mode
-        }
-    });
-
-    // Show loading overlay khi submit form một cách an toàn hơn
-    document.addEventListener('DOMContentLoaded', function() {
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                // Chỉ hiển thị spinner nếu form không có class 'no-spinner'
-                if (!this.classList.contains('no-spinner')) {
-                    const overlay = document.getElementById('loadingOverlay');
-                    if (overlay) {
-                        overlay.style.display = 'flex';
+    {# --- BLOCK SCRIPTS ĐÃ ĐƯỢC SỬA LẠI ĐÚNG CHUẨN --- #}
+    {% block scripts %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Navbar đổi màu khi cuộn
+            window.addEventListener("scroll", function () {
+                const navbar = document.querySelector(".navbar");
+                const modeToggle = document.querySelector("#modeToggle");
+                if (window.scrollY > 50) {
+                    navbar.classList.add("scrolled");
+                    if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
+                        modeToggle.classList.replace("text-dark", "text-light");
+                    }
+                } else {
+                    navbar.classList.remove("scrolled");
+                    if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
+                        modeToggle.classList.replace("text-light", "text-dark");
                     }
                 }
             });
-        });
-    });
-    
-    // Tự động khởi tạo và hiển thị các thông báo Toast
-    window.addEventListener('DOMContentLoaded', (event) => {
-        const toastElList = document.querySelectorAll('.toast');
-        toastElList.forEach(toastEl => {
-            const toast = new bootstrap.Toast(toastEl, {
-                delay: 5000 // Tự động ẩn sau 5 giây
+            
+            // Lưu trạng thái theme khi tải lại
+            window.addEventListener("DOMContentLoaded", () => {
+                if (localStorage.getItem("theme") === "dark") {
+                    document.body.classList.add("dark-mode");
+                    const icon = document.querySelector("#modeToggle i");
+                    const modeToggle = document.querySelector("#modeToggle");
+                    if(icon) icon.classList.replace("bi-moon-stars", "bi-brightness-high");
+                    if(modeToggle) modeToggle.classList.replace("text-dark", "text-light"); // Đảm bảo icon luôn sáng trong dark mode
+                }
             });
-            toast.show(); // Hiển thị toast
-        });
-    });
-</script>
 
-{% block scripts %}{% endblock %}
+            // Show loading overlay khi submit form một cách an toàn hơn
+            document.addEventListener('DOMContentLoaded', function() {
+                const forms = document.querySelectorAll('form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        // Chỉ hiển thị spinner nếu form không có class 'no-spinner'
+                        if (!this.classList.contains('no-spinner')) {
+                            const overlay = document.getElementById('loadingOverlay');
+                            if (overlay) {
+                                overlay.style.display = 'flex';
+                            }
+                        }
+                    });
+                });
+            });
+            
+            // Tự động khởi tạo và hiển thị các thông báo Toast
+            window.addEventListener('DOMContentLoaded', (event) => {
+                const toastElList = document.querySelectorAll('.toast');
+                toastElList.forEach(toastEl => {
+                    const toast = new bootstrap.Toast(toastEl, {
+                        delay: 5000 // Tự động ẩn sau 5 giây
+                    });
+                    toast.show(); // Hiển thị toast
+                });
+            });
+        </script>
+    {% endblock scripts %}
 
 </body>
 </html>

@@ -21,11 +21,11 @@ from webapp.core.week_calendar import WeekCalendar
 from webapp.core.report_generator import (
     generate_benh_truyen_nhiem_report, generate_sxh_report, 
     generate_odich_sxh_report, generate_odich_tcm_report,
-    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip
+    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip, generate_custom_btn_report
 )
 # === THAY ĐỔI: Import trực tiếp hàm logic, không qua task nữa ===
 from webapp.core.data_importer import import_data_from_excel
-
+	
 from webapp.core.dashboard_utils import (
     create_cases_by_week_chart, get_top_diseases, 
     create_top_diseases_chart, create_disease_pie_chart
@@ -308,6 +308,24 @@ def report_page():
     # Logic cho GET request
     report_info = session.pop('last_report', None)
     now = datetime.now()
+
+    # Bổ sung: Lấy dữ liệu cho form Báo cáo Tùy chỉnh
+    custom_report_donvi_options = {}
+    user_cap = user_don_vi.cap_don_vi
+    user_role = session.get('role')
+    
+    # Chỉ admin, tỉnh và khu vực mới thấy tùy chọn này
+    if user_role == 'admin' or user_cap in ['Tỉnh', 'Khu vực']:
+        if user_role == 'admin' or user_cap == 'Tỉnh':
+            khu_vuc_list = db.query(DonViHanhChinh).filter_by(cap_don_vi='Khu vực').order_by(DonViHanhChinh.ten_don_vi).all()
+            xa_list = db.query(DonViHanhChinh).filter_by(cap_don_vi='Xã').order_by(DonViHanhChinh.ten_don_vi).all()
+            custom_report_donvi_options['Khu vực'] = khu_vuc_list
+            custom_report_donvi_options['Xã'] = xa_list
+        elif user_cap == 'Khu vực':
+            # Khu vực chỉ thấy các xã của mình
+            xa_list = [c for c in user_don_vi.children if c.cap_don_vi == 'Xã']
+            custom_report_donvi_options['Xã'] = sorted(xa_list, key=lambda x: x.ten_don_vi)
+            
     return render_template(
         'report.html',
         title='Tạo Báo cáo',
@@ -315,9 +333,9 @@ def report_page():
         selected_year=now.year,
         selected_month=now.month,
         selected_week=now.isocalendar()[1],
-        report_info=report_info
+        report_info=report_info,
+        custom_report_donvi_options=custom_report_donvi_options # <-- Truyền dữ liệu mới
     )
-
 
 @main_bp.route('/download_report/<filename>/<display_name>')
 def download_report(filename, display_name):
@@ -328,6 +346,58 @@ def download_report(filename, display_name):
         flash("Không tìm thấy file báo cáo hoặc file đã quá hạn. Vui lòng tạo lại.", "danger")
         return redirect(url_for('main.report_page'))
 
+
+# ==============================================================================
+# ROUTE MỚI CHO BÁO CÁO TÙY CHỈNH
+# ==============================================================================
+@main_bp.route('/report/custom-btn', methods=['POST'])
+def custom_btn_report_action():
+    user_don_vi = g.user_don_vi
+    db = g.db
+    
+    try:
+        # 1. Lấy và xác thực dữ liệu từ form
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+        selected_ids_str = request.form.getlist('don_vi_ids') # .getlist() cho multi-select
+
+        if not all([start_date_str, end_date_str, selected_ids_str]):
+            flash({'message': 'Vui lòng điền đầy đủ thông tin: ngày bắt đầu, ngày kết thúc và chọn ít nhất một đơn vị.'}, 'warning')
+            return redirect(url_for('main.report_page'))
+
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        selected_don_vi_ids = [int(id_str) for id_str in selected_ids_str]
+
+        # 2. Chuẩn bị file để lưu
+        display_name = f"BaoCao_BTN_TuyChinh_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}.xlsx"
+        random_filename = f"{uuid.uuid4()}.xlsx"
+        filepath = os.path.join(current_app.config['REPORT_FOLDER'], random_filename)
+
+        # 3. Gọi hàm xử lý chính
+        generate_custom_btn_report(
+            db_session=db,
+            user_don_vi=user_don_vi,
+            start_date=start_date,
+            end_date=end_date,
+            selected_don_vi_ids=selected_don_vi_ids,
+            filepath=filepath
+        )
+
+        # 4. Trả kết quả về cho người dùng (theo pattern đã có)
+        session['last_report'] = {'filename': random_filename, 'display_name': display_name}
+        flash({'message': "Tạo báo cáo tùy chỉnh thành công!"}, "success")
+
+    except (ValueError, PermissionError) as e:
+        # Bắt các lỗi đã định nghĩa trong report_generator
+        current_app.logger.warning(f"Lỗi tạo báo cáo tùy chỉnh: {e}")
+        flash({'message': f'Lỗi: {e}'}, 'danger')
+    except Exception as e:
+        # Bắt các lỗi không lường trước
+        current_app.logger.error(f"Lỗi không xác định khi tạo báo cáo tùy chỉnh: {e}\n{traceback.format_exc()}")
+        flash({'message': 'Đã có lỗi không xác định xảy ra khi tạo báo cáo.'}, 'danger')
+
+    return redirect(url_for('main.report_page'))
 
 # ==============================================================================
 # ROUTE IMPORT ĐÃ ĐƯỢC CẬP NHẬT

@@ -1,5 +1,4 @@
-# file: report_generator.py (Phiên bản hoàn chỉnh cuối cùng - Đã cập nhật)
-
+# file: report_generator.py
 import pandas as pd
 import calendar
 from datetime import datetime, date, timedelta
@@ -10,28 +9,23 @@ import uuid
 import shutil
 import zipfile
 import re
-
 # Giả định các import này từ project của bạn là chính xác
 # QUAN TRỌNG: Đảm bảo model O_Dich có relationship tên là 'ca_benh_lien_quan'
 # trỏ đến danh sách các CaBenh thuộc ổ dịch đó.
 from .database_setup import CaBenh, DonViHanhChinh, O_Dich
 from .week_calendar import WeekCalendar
 from .utils import get_all_child_xa_ids
-
 # ==============================================================================
 # 1. HẰNG SỐ VÀ CẤU HÌNH
 # ==============================================================================
-
 LIST_BENH_TRUYEN_NHIEM = [
     'Tả', 'Thương hàn', 'Sốt xuất huyết Dengue', 'Viêm não Vi rút',
     'Tay - chân - miệng', 'Viêm màng não do Não mô cầu', 'Sởi',
     'Viêm gan cấp tính', 'Đậu mùa khỉ', 'BTN nguy hiểm mới'
 ]
-
 # ==============================================================================
 # 2. CÁC HÀM TRỢ GIÚP (HELPER FUNCTIONS)
 # ==============================================================================
-
 def _get_formatted_unit_name(user_don_vi: DonViHanhChinh) -> str:
     """
     Tạo tên đơn vị được định dạng chuẩn để hiển thị trên header báo cáo.
@@ -42,9 +36,10 @@ def _get_formatted_unit_name(user_don_vi: DonViHanhChinh) -> str:
     cap_don_vi = user_don_vi.cap_don_vi
     ten_don_vi = user_don_vi.ten_don_vi
 
+
     if cap_don_vi == 'Tỉnh':
         return ten_don_vi.upper()
-    
+
     elif cap_don_vi == 'Khu vực':
         # Danh sách các tiền tố cần xóa, xếp từ DÀI NHẤT đến NGẮN NHẤT.
         prefixes_to_remove = [
@@ -59,7 +54,7 @@ def _get_formatted_unit_name(user_don_vi: DonViHanhChinh) -> str:
 
     elif cap_don_vi == 'Xã':
         return f"TRẠM Y TẾ {ten_don_vi}".upper()
-    
+
     return ten_don_vi.upper()
 
 def _get_reporting_units(db_session: Session, user_don_vi: DonViHanhChinh):
@@ -67,6 +62,7 @@ def _get_reporting_units(db_session: Session, user_don_vi: DonViHanhChinh):
     reporting_units = []
     group_by_col = None
     child_level_map = {'Xã': 'Ấp', 'Khu vực': 'Xã'}
+
 
     if user_don_vi.cap_don_vi in child_level_map:
         child_level = child_level_map[user_don_vi.cap_don_vi]
@@ -89,6 +85,7 @@ def _create_excel_formats(workbook):
     base_font_13 = {'font_name': 'Times new Roman', 'font_size': 13}
     base_font_12 = {'font_name': 'Times new Roman', 'font_size': 12}
 
+
     return {
         'title': workbook.add_format({**base_font_14, 'bold': True, 'align': 'center', 'valign': 'vcenter'}),
         'header': workbook.add_format({**base_font_14, 'bold': True, 'text_wrap': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'fg_color': '#DDEBF7'}),
@@ -100,7 +97,7 @@ def _create_excel_formats(workbook):
         'italic': workbook.add_format({**base_font_14, 'italic': True, 'align': 'center'}),
         'ghichu': workbook.add_format({**base_font_13, 'italic': True, 'align': 'left'}),
         'noinhan': workbook.add_format({**base_font_12, 'bold': True, 'italic': True, 'align': 'left'}),
-        'nhanxet': workbook.add_format({**base_font_13, 'bold': True, 'italic': True, 'align': 'left'}), 
+        'nhanxet': workbook.add_format({**base_font_13, 'bold': True, 'italic': True, 'align': 'left'}),
         'tieungu': workbook.add_format({**base_font_14, 'bold': True, 'align': 'center'}),
         'sxh_title': workbook.add_format({**base_font_13, 'bold': True, 'align': 'center', 'valign': 'vcenter'}),
         'sxh_header': workbook.add_format({**base_font_13, 'bold': True, 'text_wrap': True, 'align': 'center', 'valign': 'vcenter', 'border': 1}),
@@ -117,13 +114,12 @@ def _create_excel_formats(workbook):
         'od_cell_top_center_merged': workbook.add_format({**base_font_13, 'align': 'center', 'valign': 'top', 'border': 1}),
     }
 
-def _draw_standard_header(
-    worksheet, formats, user_don_vi, report_title, period_subtitle, date_range_subtitle, last_col_letter
-):
+def _draw_standard_header(worksheet, formats, user_don_vi, report_title, period_subtitle, date_range_subtitle, last_col_letter):
     """Vẽ phần tiêu đề chuẩn cho tất cả các báo cáo."""
     so_hieu_map = {'Tỉnh': 'Số    /BC-KSBT', 'Khu vực': 'Số    /BC-TTYT', 'Xã': 'Số    /BC-TYT'}
     formatted_unit_name = _get_formatted_unit_name(user_don_vi)
-    
+
+
     ten_don_vi_cap_tren = "SỞ Y TẾ AN GIANG"
     if user_don_vi.parent and user_don_vi.cap_don_vi != 'Tỉnh':
         ten_don_vi_cap_tren = user_don_vi.parent.ten_don_vi.upper()
@@ -141,12 +137,11 @@ def _draw_standard_header(
     if date_range_subtitle:
         worksheet.merge_range(f'A8:{last_col_letter}8', date_range_subtitle, formats['sxh_italic'])
 
-def _draw_standard_footer(
-    worksheet, formats, user_don_vi, end_of_period_dt, last_row_idx, last_col_idx
-):
+def _draw_standard_footer(worksheet, formats, user_don_vi, end_of_period_dt, last_row_idx, last_col_idx):
     """Vẽ phần chân trang và chữ ký chuẩn cho tất cả các báo cáo."""
     chuc_danh_map = {'Tỉnh': 'GIÁM ĐỐC', 'Khu vực': 'GIÁM ĐỐC', 'Xã': 'TRƯỞNG TRẠM'}
-    
+
+
     date_line_row = last_row_idx + 2
     title_line_row = date_line_row + 1
     recipient_line_row = title_line_row + 6
@@ -172,6 +167,7 @@ def _draw_details_sheet(writer: pd.ExcelWriter, sheet_name: str, data_objects: l
     if not data_objects:
         return
 
+
     records = []
     for obj in data_objects:
         record = {}
@@ -188,7 +184,7 @@ def _draw_details_sheet(writer: pd.ExcelWriter, sheet_name: str, data_objects: l
 
     df_details = pd.DataFrame(records)
     df_details.to_excel(writer, sheet_name=sheet_name, index=False, startrow=2)
-    
+
     worksheet = writer.sheets[sheet_name]
     num_cols = len(df_details.columns)
     if num_cols > 0:
@@ -202,26 +198,24 @@ def _draw_details_sheet(writer: pd.ExcelWriter, sheet_name: str, data_objects: l
             len(str(series.name))
         )) + 2
         worksheet.set_column(idx, idx, max_len)
-
+        
 # *** HÀM MỚI: Vẽ sheet chi tiết ca bệnh theo ổ dịch ***
-def _draw_outbreak_cases_details_sheet(
-    writer: pd.ExcelWriter, sheet_name: str, outbreaks_in_period: list, 
-    column_map: dict, title: str, formats: dict, disease_type: str
-):
+def _draw_outbreak_cases_details_sheet(writer: pd.ExcelWriter, sheet_name: str, outbreaks_in_period: list, column_map: dict, title: str, formats: dict, disease_type: str):
     """
     Vẽ sheet chi tiết danh sách ca bệnh theo từng ổ dịch, có gộp ô.
     """
     if not outbreaks_in_period:
         return
 
+
     worksheet = writer.book.add_worksheet(sheet_name)
-    
+
     # --- 1. Vẽ tiêu đề và header ---
     headers = ["STT", "Thông tin ổ dịch"] + list(column_map.values())
     num_cols = len(headers)
     last_col_letter = chr(ord('A') + num_cols - 1)
     worksheet.merge_range(f'A1:{last_col_letter}1', title, formats['title'])
-    
+
     for col_idx, header in enumerate(headers):
         worksheet.write(2, col_idx, header, formats['sxh_header'])
 
@@ -280,12 +274,10 @@ def _draw_outbreak_cases_details_sheet(
     worksheet.set_column('D:D', 12)  # Ngày sinh
     worksheet.set_column('E:G', 20)  # Địa chỉ
     worksheet.set_column('H:I', 15)  # Ngày KP, Tình trạng
-
 # ==============================================================================
 # 3. BÁO CÁO BỆNH TRUYỀN NHIỄM
 # ==============================================================================
 
-# ... (Toàn bộ code của phần 3 không thay đổi) ...
 def _generate_btn_analysis_data(
     db_session: Session, user_don_vi: DonViHanhChinh,
     current_period: tuple, prev_period: tuple,
@@ -366,90 +358,26 @@ def _generate_btn_comments(analysis: dict, period_type: str, period_number: int,
     if analysis['top_location']: comments.append(f"- {analysis['top_location']['name']} là địa phương có tổng số ca ghi nhận (cả mới và bổ sung) cao nhất trong kỳ với {analysis['top_location']['count']} ca, chủ yếu là bệnh {analysis['top_location']['disease']}.")
     return comments
 
-def _generate_benh_truyen_nhiem_report_base(db_session: Session, user_don_vi: DonViHanhChinh, filepath: str, year: int, period_type: str, period_number: int):
-    # --- PHẦN 1: TÍNH TOÁN THỜI GIAN ---
-    if period_type == 'week':
-        calendar_obj = WeekCalendar(year)
-        current_details = calendar_obj.get_week_details(period_number)
-        if current_details is None: raise ValueError(f"Không tìm thấy tuần {period_number}.")
-        prev_details = calendar_obj.get_week_details(period_number - 1)
-        start_of_year_dt, end_of_period_dt_obj = calendar_obj.get_ytd_range(period_number)
-        start_of_period_dt = current_details['ngay_bat_dau']
-        end_of_period_dt = end_of_period_dt_obj.date()
-        analysis_periods = {"current_period": (start_of_period_dt.date(), end_of_period_dt), "prev_period": (prev_details['ngay_bat_dau'].date(), prev_details['ngay_ket_thuc'].date()) if prev_details is not None else None}
-        comment_details = {"period_type": "Tuần", "period_number": period_number, "prev_period_number": period_number - 1, "user_don_vi": user_don_vi}
-        period_name = f"Tuần {period_number} năm {year}"
-        period_label, note_text = "TS", "Ghi chú: TS: Tổng số ca mắc trong tuần; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn"
-    elif period_type == 'month':
-        _, num_days = calendar.monthrange(year, period_number)
-        start_of_period_dt, end_of_period_dt_obj = datetime(year, period_number, 1), datetime(year, period_number, num_days)
-        start_of_year_dt = datetime(year, 1, 1)
-        end_of_period_dt = end_of_period_dt_obj.date()
-        prev_month = period_number - 1 if period_number > 1 else 12
-        prev_month_year = year if period_number > 1 else year - 1
-        _, prev_month_num_days = calendar.monthrange(prev_month_year, prev_month)
-        start_of_prev_month, end_of_prev_month = date(prev_month_year, prev_month, 1), date(prev_month_year, prev_month, prev_month_num_days)
-        analysis_periods = {"current_period": (start_of_period_dt.date(), end_of_period_dt), "prev_period": (start_of_prev_month, end_of_prev_month)}
-        comment_details = {"period_type": "Tháng", "period_number": period_number, "prev_period_number": prev_month, "user_don_vi": user_don_vi}
-        period_name = f"Tháng {period_number} năm {year}"
-        period_label, note_text = "TM", "Ghi chú: TM: Tổng số ca mắc trong tháng; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn"
-    else: raise ValueError("Loại kỳ báo cáo không hợp lệ.")
-    
-    # --- PHẦN 2: LẤY VÀ XỬ LÝ DỮ LIỆU ---
-    list_cases_for_details_sheet = []
-    reporting_units, group_by_col = _get_reporting_units(db_session, user_don_vi)
-    results, totals = {}, {benh: {'mac_p': 0, 'chet_p': 0, 'mac_bs': 0, 'chet_bs': 0, 'mac_cd': 0, 'chet_cd': 0} for benh in LIST_BENH_TRUYEN_NHIEM}
-    df_raw_for_analysis = pd.DataFrame()
-
-    if reporting_units and group_by_col:
-        xa_ids_to_query = get_all_child_xa_ids(user_don_vi)
-        if xa_ids_to_query:
-            query_start_date = start_of_year_dt.date()
-            if analysis_periods.get('prev_period') and analysis_periods['prev_period']: query_start_date = min(start_of_year_dt.date(), analysis_periods['prev_period'][0])
-            query = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(CaBenh.xa_id.in_(xa_ids_to_query), CaBenh.ngay_khoi_phat >= query_start_date)
-            all_cases = query.all()
-
-            start_dt = start_of_period_dt.date() if isinstance(start_of_period_dt, datetime) else start_of_period_dt
-            end_dt = end_of_period_dt
-            cases_in_period = [c for c in all_cases if c.ngay_khoi_phat and start_dt <= c.ngay_khoi_phat <= end_dt]
-            
-            cases_supplementary = []
-            for c in all_cases:
-                if c.ngay_import and c.ngay_khoi_phat:
-                    ngay_import_date = c.ngay_import.date() if isinstance(c.ngay_import, datetime) else c.ngay_import
-                    if start_dt <= ngay_import_date <= end_dt and c.ngay_khoi_phat < start_dt:
-                        cases_supplementary.append(c)
-
-            list_cases_for_details_sheet.extend(cases_in_period); list_cases_for_details_sheet.extend(cases_supplementary)
-            
-            data_list = [{'ngay_khoi_phat': c.ngay_khoi_phat, 'chan_doan_chinh': c.chan_doan_chinh, 'tinh_trang_hien_nay': c.tinh_trang_hien_nay, 'xa_id': c.xa_id, 'dia_chi_ap': c.dia_chi_ap, 'ngay_import': c.ngay_import, 'don_vi_ten': c.don_vi.ten_don_vi if c.don_vi else ''} for c in all_cases]
-            df_raw = pd.DataFrame(data_list)
-            if df_raw.empty: df_raw = pd.DataFrame(columns=['ngay_khoi_phat', 'chan_doan_chinh', 'tinh_trang_hien_nay', 'xa_id', 'dia_chi_ap', 'ngay_import', 'don_vi_ten'])
-            else: df_raw['ngay_khoi_phat'], df_raw['ngay_import'] = pd.to_datetime(df_raw['ngay_khoi_phat'], errors='coerce'), pd.to_datetime(df_raw['ngay_import'], errors='coerce')
-            
-            df_raw_for_analysis = df_raw.copy()
-            df_raw = df_raw[df_raw['ngay_khoi_phat'] <= pd.to_datetime(end_of_period_dt)]
-            for unit in reporting_units:
-                unit_id_or_name = unit.id if group_by_col == 'xa_id' else unit.ten_don_vi
-                df_unit_raw = df_raw[df_raw[group_by_col] == unit_id_or_name]
-                unit_results = {}
-                for benh in LIST_BENH_TRUYEN_NHIEM:
-                    df_benh_raw = df_unit_raw[df_unit_raw['chan_doan_chinh'] == benh]
-                    df_benh_period = df_benh_raw[df_benh_raw['ngay_khoi_phat'] >= pd.to_datetime(start_dt)]
-                    df_import_in_period = df_benh_raw[(df_benh_raw['ngay_import'] >= pd.to_datetime(start_dt)) & (df_benh_raw['ngay_import'] <= datetime.combine(end_dt, datetime.max.time()))]
-                    df_benh_bosung = df_import_in_period[df_import_in_period['ngay_khoi_phat'] < pd.to_datetime(start_dt)]
-                    unit_results[benh] = {'mac_p': len(df_benh_period), 'chet_p': len(df_benh_period[df_benh_period['tinh_trang_hien_nay'] == 'Tử vong']), 'mac_bs': len(df_benh_bosung), 'chet_bs': len(df_benh_bosung[df_benh_bosung['tinh_trang_hien_nay'] == 'Tử vong']), 'mac_cd': len(df_benh_raw), 'chet_cd': len(df_benh_raw[df_benh_raw['tinh_trang_hien_nay'] == 'Tử vong'])}
-                    for key in totals[benh]: totals[benh][key] += unit_results[benh][key]
-                results[unit.id] = unit_results
-    
-    # --- PHẦN 3: TẠO NHẬN XÉT ---
-    comments = []
-    analysis_data = None
-    if not df_raw_for_analysis.empty:
-        analysis_data = _generate_btn_analysis_data(db_session, user_don_vi, df_raw=df_raw_for_analysis, period_type=period_type, **analysis_periods)
-        comments = _generate_btn_comments(analysis_data, **comment_details)
-
-    # --- PHẦN 4: VẼ EXCEL ---
+def _generate_btn_report_core(
+    filepath: str,
+    user_don_vi: DonViHanhChinh,
+    report_title: str,
+    period_name: str,
+    date_range_subtitle: str,
+    end_of_period_dt: date,
+    reporting_units: list[DonViHanhChinh],
+    results: dict,
+    totals: dict,
+    list_cases_for_details_sheet: list,
+    period_label: str,
+    note_text: str,
+    comments: list,
+    analysis_data: dict | None # Dùng để vẽ sheet bổ sung
+):
+    """
+    Hàm lõi CHỈ để vẽ file Excel báo cáo BTN từ các dữ liệu đã được tính toán.
+    Hàm này không còn thực hiện logic truy vấn hay phân tích.
+    """
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
         workbook = writer.book
         
@@ -457,62 +385,75 @@ def _generate_benh_truyen_nhiem_report_base(db_session: Session, user_don_vi: Do
         worksheet = workbook.add_worksheet('BaoCaoBTN_TongHop')
         formats = _create_excel_formats(workbook)
         last_col_idx = 1 + 1 + (len(LIST_BENH_TRUYEN_NHIEM) * 2) - 1
-        _draw_standard_header(worksheet, formats, user_don_vi, 'BÁO CÁO BỆNH TRUYỀN NHIỄM', period_name, f"Từ ngày {start_of_period_dt.strftime('%d/%m/%Y')} đến ngày {end_of_period_dt.strftime('%d/%m/%Y')}", chr(ord('A') + last_col_idx))
+        _draw_standard_header(worksheet, formats, user_don_vi, report_title, period_name, date_range_subtitle, chr(ord('A') + last_col_idx))
         
         header_start_row = 9
-        worksheet.merge_range(header_start_row, 0, header_start_row + 1, 0, 'Địa phương', formats['header']); worksheet.merge_range(header_start_row, 1, header_start_row + 1, 1, 'Loại dịch', formats['header'])
+        worksheet.merge_range(header_start_row, 0, header_start_row + 1, 0, 'Địa phương', formats['header'])
+        worksheet.merge_range(header_start_row, 1, header_start_row + 1, 1, 'Loại dịch', formats['header'])
         for i, benh in enumerate(LIST_BENH_TRUYEN_NHIEM):
             start_col = 2 + i * 2
             worksheet.set_column(start_col, start_col + 1, max(10, len(benh) // 2))
             worksheet.merge_range(header_start_row, start_col, header_start_row, start_col + 1, benh, formats['header'])
-            worksheet.write(header_start_row + 1, start_col, 'Mắc', formats['header']); worksheet.write(header_start_row + 1, start_col + 1, 'Chết', formats['header'])
-        worksheet.set_column('A:A', 22); worksheet.set_column('B:B', 15); worksheet.set_row(9, 50)
+            worksheet.write(header_start_row + 1, start_col, 'Mắc', formats['header'])
+            worksheet.write(header_start_row + 1, start_col + 1, 'Chết', formats['header'])
+        worksheet.set_column('A:A', 25); worksheet.set_column('B:B', 15); worksheet.set_row(9, 50)
+        
         current_row = header_start_row + 2
         for unit in reporting_units:
-            for i, label in enumerate([period_label, 'BS', 'CD']): worksheet.write(current_row + i, 1, label, formats['cell'])
+            for i, label in enumerate([period_label, 'BS', 'CD']):
+                worksheet.write(current_row + i, 1, label, formats['cell'])
             worksheet.merge_range(current_row, 0, current_row + 2, 0, unit.ten_don_vi, formats['row_header'])
             for j, benh in enumerate(LIST_BENH_TRUYEN_NHIEM):
                 start_col = 2 + j * 2
                 res = results.get(unit.id, {}).get(benh, {})
-                worksheet.write(current_row, start_col, res.get('mac_p', 0), formats['cell']); worksheet.write(current_row, start_col + 1, res.get('chet_p', 0), formats['cell'])
-                worksheet.write(current_row + 1, start_col, res.get('mac_bs', 0), formats['cell']); worksheet.write(current_row + 1, start_col + 1, res.get('chet_bs', 0), formats['cell'])
-                worksheet.write(current_row + 2, start_col, res.get('mac_cd', 0), formats['cell']); worksheet.write(current_row + 2, start_col + 1, res.get('chet_cd', 0), formats['cell'])
+                worksheet.write(current_row, start_col, res.get('mac_p', 0), formats['cell'])
+                worksheet.write(current_row, start_col + 1, res.get('chet_p', 0), formats['cell'])
+                worksheet.write(current_row + 1, start_col, res.get('mac_bs', 0), formats['cell'])
+                worksheet.write(current_row + 1, start_col + 1, res.get('chet_bs', 0), formats['cell'])
+                worksheet.write(current_row + 2, start_col, res.get('mac_cd', 0), formats['cell'])
+                worksheet.write(current_row + 2, start_col + 1, res.get('chet_cd', 0), formats['cell'])
             current_row += 3
+
         worksheet.merge_range(current_row, 0, current_row + 2, 0, 'TỔNG CỘNG', formats['header'])
-        for i, label in enumerate([period_label, 'BS', 'CD']): worksheet.write(current_row + i, 1, label, formats['total_header'])
+        for i, label in enumerate([period_label, 'BS', 'CD']):
+            worksheet.write(current_row + i, 1, label, formats['total_header'])
         for j, benh in enumerate(LIST_BENH_TRUYEN_NHIEM):
             start_col = 2 + j * 2
-            worksheet.write(current_row, start_col, totals[benh]['mac_p'], formats['header']); worksheet.write(current_row, start_col + 1, totals[benh]['chet_p'], formats['header'])
-            worksheet.write(current_row + 1, start_col, totals[benh]['mac_bs'], formats['header']); worksheet.write(current_row + 1, start_col + 1, totals[benh]['chet_bs'], formats['header'])
-            worksheet.write(current_row + 2, start_col, totals[benh]['mac_cd'], formats['header']); worksheet.write(current_row + 2, start_col + 1, totals[benh]['chet_cd'], formats['header'])
-        footer_base_row = current_row + 2
+            worksheet.write(current_row, start_col, totals[benh]['mac_p'], formats['header'])
+            worksheet.write(current_row, start_col + 1, totals[benh]['chet_p'], formats['header'])
+            worksheet.write(current_row + 1, start_col, totals[benh]['mac_bs'], formats['header'])
+            worksheet.write(current_row + 1, start_col + 1, totals[benh]['chet_bs'], formats['header'])
+            worksheet.write(current_row + 2, start_col, totals[benh]['mac_cd'], formats['header'])
+            worksheet.write(current_row + 2, start_col + 1, totals[benh]['chet_cd'], formats['header'])
+        
+        footer_base_row = current_row + 3
+        worksheet.write(footer_base_row, 0, note_text, formats['ghichu'])
         if comments:
-            worksheet.write(footer_base_row + 1, 0, note_text, formats['ghichu'])
-            worksheet.write(footer_base_row + 2, 0, "Nhận xét:", formats['nhanxet'])
-            comment_start_row = footer_base_row + 3
+            worksheet.write(footer_base_row + 1, 0, "Nhận xét:", formats['nhanxet'])
+            comment_start_row = footer_base_row + 2
             comment_format = workbook.add_format({'font_name': 'Times new Roman', 'font_size': 13, 'valign': 'top', 'text_wrap': True})
-            for i, comment in enumerate(comments): worksheet.merge_range(comment_start_row + i, 0, comment_start_row + i, last_col_idx, comment, comment_format)
+            for i, comment in enumerate(comments):
+                worksheet.merge_range(comment_start_row + i, 0, comment_start_row + i, last_col_idx, comment, comment_format)
             footer_base_row = comment_start_row + len(comments)
+
         _draw_standard_footer(worksheet, formats, user_don_vi, end_of_period_dt, footer_base_row, last_col_idx)
 
         # --- Sheet 2: Chi tiết TẤT CẢ ca bệnh (mới + bổ sung) ---
         cabenh_column_map = {'ho_ten': 'Họ và tên', 'ngay_sinh': 'Ngày sinh', 'don_vi.ten_don_vi': 'Xã/Phường', 'dia_chi_ap': 'Ấp/Khu vực', 'dia_chi_chi_tiet': 'Địa chỉ chi tiết', 'chan_doan_chinh': 'Chẩn đoán', 'ngay_khoi_phat': 'Ngày khởi phát', 'tinh_trang_hien_nay': 'Tình trạng'}
         _draw_details_sheet(writer, 'ChiTiet_CaBenh', list_cases_for_details_sheet, cabenh_column_map, f"DANH SÁCH CA BỆNH GHI NHẬN TRONG {period_name.upper()}", formats)
 
-        # --- Sheet 3: Chi tiết ca bổ sung ---
+        # --- Sheet 3: Chi tiết ca bổ sung (PHỤC HỒI) ---
         if analysis_data and analysis_data.get('bs_details'):
             worksheet_bs = workbook.add_worksheet('ChiTiet_CaBoSung')
             df_bs_details = pd.DataFrame(analysis_data['bs_details'])
             
-            period_col_name = 'Tuần khởi phát' if period_type == 'week' else 'Tháng khởi phát'
+            period_col_name = 'Tuần KP' if 'original_period' in df_bs_details.columns and df_bs_details['original_period'].max() > 12 else 'Tháng KP'
             df_bs_details.rename(columns={
-                'chan_doan_chinh': 'Tên bệnh',
-                'original_year': 'Năm khởi phát',
-                'original_period': period_col_name,
-                'count': 'Số ca bổ sung'
+                'chan_doan_chinh': 'Tên bệnh', 'original_year': 'Năm KP',
+                'original_period': period_col_name, 'count': 'Số ca bổ sung'
             }, inplace=True)
 
-            worksheet_bs.merge_range('A1:D1', f"Chi tiết các ca bệnh bổ sung được ghi nhận trong {period_name.lower()}", formats['title'])
+            worksheet_bs.merge_range('A1:D1', f"Chi tiết ca bệnh bổ sung ghi nhận trong {period_name.lower()}", formats['title'])
             df_bs_details.to_excel(writer, sheet_name='ChiTiet_CaBoSung', startrow=2, index=False)
             
             for idx, col in enumerate(df_bs_details.columns):
@@ -520,17 +461,264 @@ def _generate_benh_truyen_nhiem_report_base(db_session: Session, user_don_vi: Do
                 max_len = max((series.astype(str).map(len).max(), len(str(series.name)))) + 2
                 worksheet_bs.set_column(idx, idx, max_len)
 
-def generate_benh_truyen_nhiem_report(db_session: Session, calendar_obj: WeekCalendar, week_number: int, user_don_vi: DonViHanhChinh, filepath: str):
-    _generate_benh_truyen_nhiem_report_base(db_session, user_don_vi, filepath, year=calendar_obj.year, period_type='week', period_number=week_number)
+def _generate_benh_truyen_nhiem_report_base(
+    db_session: Session,
+    user_don_vi: DonViHanhChinh,
+    filepath: str,
+    year: int,
+    period_type: str,
+    period_number: int
+):
+    # ==================================================================
+    # GIAI ĐOẠN 1: CHUẨN BỊ TẤT CẢ THAM SỐ VÀ KHOẢNG THỜI GIAN
+    # ==================================================================
+    start_of_year_dt = date(year, 1, 1)
+    
+    if period_type == 'week':
+        calendar_obj = WeekCalendar(year)
+        current_details = calendar_obj.get_week_details(period_number)
+        if current_details is None:
+            raise ValueError(f"Không tìm thấy tuần {period_number}.")
+        
+        prev_details = calendar_obj.get_week_details(period_number - 1)
+        start_of_period_dt = current_details['ngay_bat_dau'].date()
+        end_of_period_dt = current_details['ngay_ket_thuc'].date()
 
+        # Xử lý prev_details an toàn
+        prev_period = None
+        if prev_details is not None:
+            try:
+                prev_start = (
+                    prev_details['ngay_bat_dau'].iloc[0].date()
+                    if hasattr(prev_details['ngay_bat_dau'], "iloc")
+                    else prev_details['ngay_bat_dau'].date()
+                )
+                prev_end = (
+                    prev_details['ngay_ket_thuc'].iloc[0].date()
+                    if hasattr(prev_details['ngay_ket_thuc'], "iloc")
+                    else prev_details['ngay_ket_thuc'].date()
+                )
+                prev_period = (prev_start, prev_end)
+            except Exception:
+                prev_period = None
+
+        analysis_periods = {
+            "current_period": (start_of_period_dt, end_of_period_dt),
+            "prev_period": prev_period,
+        }
+
+        comment_details = {
+            "period_type": "Tuần",
+            "period_number": period_number,
+            "prev_period_number": period_number - 1,
+            "user_don_vi": user_don_vi,
+        }
+        period_name = f"Tuần {period_number} năm {year}"
+        period_label, note_text = (
+            "TS",
+            "Ghi chú: TS: Tổng số ca mắc trong tuần; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn",
+        )
+
+    elif period_type == 'month':
+        _, num_days = calendar.monthrange(year, period_number)
+        start_of_period_dt, end_of_period_dt = (
+            date(year, period_number, 1),
+            date(year, period_number, num_days),
+        )
+
+        prev_month, prev_month_year = (
+            (period_number - 1, year) if period_number > 1 else (12, year - 1)
+        )
+        _, prev_month_num_days = calendar.monthrange(prev_month_year, prev_month)
+        start_of_prev_month, end_of_prev_month = (
+            date(prev_month_year, prev_month, 1),
+            date(prev_month_year, prev_month, prev_month_num_days),
+        )
+
+        analysis_periods = {
+            "current_period": (start_of_period_dt, end_of_period_dt),
+            "prev_period": (start_of_prev_month, end_of_prev_month),
+        }
+
+        comment_details = {
+            "period_type": "Tháng",
+            "period_number": period_number,
+            "prev_period_number": prev_month,
+            "user_don_vi": user_don_vi,
+        }
+        period_name = f"Tháng {period_number} năm {year}"
+        period_label, note_text = (
+            "TM",
+            "Ghi chú: TM: Tổng số ca mắc trong tháng; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn",
+        )
+
+    else:
+        raise ValueError("Loại kỳ báo cáo không hợp lệ.")
+        
+    reporting_units, group_by_col = _get_reporting_units(db_session, user_don_vi)
+    xa_ids_to_query = get_all_child_xa_ids(user_don_vi)
+    
+    # ==================================================================
+    # GIAI ĐOẠN 2: LẤY DỮ LIỆU THÔ VÀ TẠO DATAFRAME
+    # ==================================================================
+    all_cases = []
+    if reporting_units and xa_ids_to_query:
+        query_start_date = start_of_year_dt
+        if analysis_periods.get('prev_period'):
+            query_start_date = min(start_of_year_dt, analysis_periods['prev_period'][0])
+            
+        query = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(
+            CaBenh.xa_id.in_(xa_ids_to_query), 
+            CaBenh.ngay_khoi_phat >= query_start_date
+        )
+        all_cases = query.all()
+
+        supplementary_cases = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(
+            CaBenh.xa_id.in_(xa_ids_to_query),
+            CaBenh.ngay_import.between(start_of_period_dt, end_of_period_dt),
+            CaBenh.ngay_khoi_phat < start_of_period_dt
+        ).all()
+        all_cases.extend(supplementary_cases)
+
+    df_raw = pd.DataFrame()
+    if all_cases:
+        data_list = [
+            {
+                'ngay_khoi_phat': c.ngay_khoi_phat,
+                'chan_doan_chinh': c.chan_doan_chinh,
+                'tinh_trang_hien_nay': c.tinh_trang_hien_nay,
+                'xa_id': c.xa_id,
+                'dia_chi_ap': c.dia_chi_ap,
+                'ngay_import': c.ngay_import,
+                'don_vi_ten': c.don_vi.ten_don_vi if c.don_vi else ''
+            }
+            for c in all_cases
+        ]
+        df_raw = pd.DataFrame(data_list)
+        df_raw['ngay_khoi_phat'] = pd.to_datetime(df_raw['ngay_khoi_phat'], errors='coerce')
+        df_raw['ngay_import'] = pd.to_datetime(df_raw['ngay_import'], errors='coerce')
+
+    # ==================================================================
+    # GIAI ĐOẠN 3: PHÂN TÍCH VÀ TẠO NHẬN XÉT
+    # ==================================================================
+    analysis_data = _generate_btn_analysis_data(
+        db_session,
+        user_don_vi,
+        df_raw=df_raw.copy(),
+        period_type=period_type,
+        **analysis_periods
+    )
+    comments = _generate_btn_comments(analysis_data, **comment_details)
+    
+    # ==================================================================
+    # GIAI ĐOẠN 4: TÍNH TOÁN SỐ LIỆU CHI TIẾT CHO BẢNG
+    # ==================================================================
+    results, totals = {}, {
+        benh: {'mac_p': 0, 'chet_p': 0, 'mac_bs': 0, 'chet_bs': 0, 'mac_cd': 0, 'chet_cd': 0}
+        for benh in LIST_BENH_TRUYEN_NHIEM
+    }
+    list_cases_for_details_sheet = []
+
+    if not df_raw.empty:
+        df_ytd = df_raw[
+            (df_raw['ngay_khoi_phat'] >= pd.to_datetime(start_of_year_dt)) &
+            (df_raw['ngay_khoi_phat'] <= pd.to_datetime(end_of_period_dt))
+        ]
+
+        df_in_period = df_raw[
+            df_raw['ngay_khoi_phat'].between(
+                pd.to_datetime(start_of_period_dt),
+                pd.to_datetime(end_of_period_dt)
+            )
+        ]
+        df_supplementary = df_raw[
+            (df_raw['ngay_import'] >= pd.to_datetime(start_of_period_dt)) &
+            (df_raw['ngay_import'] < pd.to_datetime(end_of_period_dt) + timedelta(days=1)) &
+            (df_raw['ngay_khoi_phat'] < pd.to_datetime(start_of_period_dt))
+        ]
+        
+        # Lọc ca bệnh cho sheet chi tiết
+        for case in all_cases:
+            is_in_period = case.ngay_khoi_phat and start_of_period_dt <= case.ngay_khoi_phat <= end_of_period_dt
+            is_supplementary = False
+            if case.ngay_import and case.ngay_khoi_phat and case.ngay_khoi_phat < start_of_period_dt:
+                ngay_import_date = case.ngay_import.date() if isinstance(case.ngay_import, datetime) else case.ngay_import
+                if start_of_period_dt <= ngay_import_date <= end_of_period_dt:
+                    is_supplementary = True
+            if is_in_period or is_supplementary:
+                list_cases_for_details_sheet.append(case)
+
+        for unit in reporting_units:
+            unit_id_or_name = unit.id if group_by_col == 'xa_id' else unit.ten_don_vi
+            df_unit_ytd = df_ytd[df_ytd[group_by_col] == unit_id_or_name]
+            unit_results = {}
+            for benh in LIST_BENH_TRUYEN_NHIEM:
+                df_benh_ytd = df_unit_ytd[df_unit_ytd['chan_doan_chinh'] == benh]
+                df_benh_period = df_benh_ytd[
+                    df_benh_ytd['ngay_khoi_phat'].between(
+                        pd.to_datetime(start_of_period_dt),
+                        pd.to_datetime(end_of_period_dt)
+                    )
+                ]
+                df_import_in_period = df_benh_ytd[
+                    (df_benh_ytd['ngay_import'] >= pd.to_datetime(start_of_period_dt)) &
+                    (df_benh_ytd['ngay_import'] < pd.to_datetime(end_of_period_dt) + timedelta(days=1))
+                ]
+                df_benh_bosung = df_import_in_period[
+                    df_import_in_period['ngay_khoi_phat'] < pd.to_datetime(start_of_period_dt)
+                ]
+
+                unit_results[benh] = {
+                    'mac_p': len(df_benh_period),
+                    'chet_p': len(df_benh_period[df_benh_period['tinh_trang_hien_nay'] == 'Tử vong']),
+                    'mac_bs': len(df_benh_bosung),
+                    'chet_bs': len(df_benh_bosung[df_benh_bosung['tinh_trang_hien_nay'] == 'Tử vong']),
+                    'mac_cd': len(df_benh_ytd),
+                    'chet_cd': len(df_benh_ytd[df_benh_ytd['tinh_trang_hien_nay'] == 'Tử vong'])
+                }
+                for key in totals[benh]:
+                    totals[benh][key] += unit_results[benh][key]
+            results[unit.id] = unit_results
+
+    # ==================================================================
+    # GIAI ĐOẠN 5: KẾT XUẤT RA EXCEL
+    # ==================================================================
+    _generate_btn_report_core(
+        filepath=filepath,
+        user_don_vi=user_don_vi,
+        report_title='BÁO CÁO BỆNH TRUYỀN NHIỄM',
+        period_name=period_name,
+        date_range_subtitle=f"Từ ngày {start_of_period_dt.strftime('%d/%m/%Y')} đến ngày {end_of_period_dt.strftime('%d/%m/%Y')}",
+        end_of_period_dt=end_of_period_dt,
+        reporting_units=reporting_units,
+        results=results,
+        totals=totals,
+        list_cases_for_details_sheet=list_cases_for_details_sheet,
+        period_label=period_label,
+        note_text=note_text,
+        comments=comments,
+        analysis_data=analysis_data
+    )
+
+
+def generate_benh_truyen_nhiem_report(db_session: Session, calendar_obj: WeekCalendar, week_number: int, user_don_vi: DonViHanhChinh, filepath: str):
+    """Hàm public để tạo báo cáo BTN theo tuần."""
+    _generate_benh_truyen_nhiem_report_base(
+        db_session, 
+        user_don_vi, 
+        filepath, 
+        year=calendar_obj.year, 
+        period_type='week', 
+        period_number=week_number
+    )
+
+# Hàm generate_benh_truyen_nhiem_report_monthly của bạn sẽ nằm ngay sau đây...
 def generate_benh_truyen_nhiem_report_monthly(db_session: Session, year: int, month: int, user_don_vi: DonViHanhChinh, filepath: str):
     _generate_benh_truyen_nhiem_report_base(db_session, user_don_vi, filepath, year=year, period_type='month', period_number=month)
-
 # ==============================================================================
 # 4. BÁO CÁO SỐT XUẤT HUYẾT
 # ==============================================================================
 
-# ... (Toàn bộ code của phần 4 không thay đổi) ...
 def _generate_sxh_analysis_data(db_session: Session, user_don_vi: DonViHanhChinh, current_period: tuple, prev_period: tuple, cumulative_this_year: tuple, cumulative_last_year: tuple):
     data = {}
     xa_ids_to_query = get_all_child_xa_ids(user_don_vi)
@@ -576,12 +764,14 @@ def _generate_sxh_report_base(db_session: Session, start_of_year_dt: date, end_o
         if xa_ids_to_query:
             query = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(CaBenh.xa_id.in_(xa_ids_to_query), CaBenh.chan_doan_chinh.like('%Sốt xuất huyết%'), CaBenh.ngay_khoi_phat >= start_of_year_dt, CaBenh.ngay_khoi_phat <= end_of_period_dt)
             all_sxh_cases = query.all()
-            
+
+
             list_cases_for_details_sheet = [c for c in all_sxh_cases if c.ngay_khoi_phat and start_of_period_dt <= c.ngay_khoi_phat <= end_of_period_dt]
             
             data_list = [{'ngay_khoi_phat': c.ngay_khoi_phat, 'ngay_sinh': c.ngay_sinh, 'phan_do_benh': c.phan_do_benh, 'tinh_trang_hien_nay': c.tinh_trang_hien_nay, 'xa_id': c.xa_id, 'dia_chi_ap': c.dia_chi_ap} for c in all_sxh_cases]
             df_raw = pd.DataFrame(data_list)
-            if df_raw.empty: df_raw = pd.DataFrame(columns=['ngay_khoi_phat', 'ngay_sinh', 'phan_do_benh', 'tinh_trang_hien_nay', 'xa_id', 'dia_chi_ap', 'tuoi'])
+            if df_raw.empty:
+                df_raw = pd.DataFrame(columns=['ngay_khoi_phat', 'ngay_sinh', 'phan_do_benh', 'tinh_trang_hien_nay', 'xa_id', 'dia_chi_ap', 'tuoi'])
             else:
                 df_raw['ngay_khoi_phat'], df_raw['ngay_sinh'] = pd.to_datetime(df_raw['ngay_khoi_phat'], errors='coerce'), pd.to_datetime(df_raw['ngay_sinh'], errors='coerce')
                 df_raw.dropna(subset=['ngay_khoi_phat', 'ngay_sinh'], inplace=True)
@@ -591,12 +781,12 @@ def _generate_sxh_report_base(db_session: Session, start_of_year_dt: date, end_o
                 unit_id_or_name = unit.id if group_by_col == 'xa_id' else unit.ten_don_vi
                 df_unit_raw, df_unit_period = df_raw[df_raw[group_by_col] == unit_id_or_name], df_period[df_period[group_by_col] == unit_id_or_name]
                 results[unit.id] = {'mac_cb_p': len(df_unit_period[df_unit_period['phan_do_benh'] != 'Sốt xuất huyết Dengue nặng']), 'mac_cb_p_15t': len(df_unit_period[(df_unit_period['phan_do_benh'] != 'Sốt xuất huyết Dengue nặng') & (df_unit_period['tuoi'] <= 15)]), 'mac_cb_cd': len(df_unit_raw[df_unit_raw['phan_do_benh'] != 'Sốt xuất huyết Dengue nặng']), 'mac_nang_p': len(df_unit_period[df_unit_period['phan_do_benh'] == 'Sốt xuất huyết Dengue nặng']), 'mac_nang_p_15t': len(df_unit_period[(df_unit_period['phan_do_benh'] == 'Sốt xuất huyết Dengue nặng') & (df_unit_period['tuoi'] <= 15)]), 'mac_nang_cd': len(df_unit_raw[df_unit_raw['phan_do_benh'] == 'Sốt xuất huyết Dengue nặng']), 'tong_mac_p': len(df_unit_period), 'tong_mac_cd': len(df_unit_raw), 'chet_p': len(df_unit_period[df_unit_period['tinh_trang_hien_nay'] == 'Tử vong']), 'chet_p_15t': len(df_unit_period[(df_unit_period['tinh_trang_hien_nay'] == 'Tử vong') & (df_unit_period['tuoi'] <= 15)]), 'chet_cd': len(df_unit_raw[df_unit_raw['tinh_trang_hien_nay'] == 'Tử vong'])}
-    
+
     comments = []
     if analysis_periods and comment_details:
         analysis_data = _generate_sxh_analysis_data(db_session, user_don_vi, **analysis_periods)
         comments = _generate_sxh_comments(analysis_data, **comment_details)
- 
+
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
         workbook = writer.book
         worksheet = workbook.add_worksheet('BaoCaoSXH')
@@ -669,14 +859,13 @@ def generate_sxh_report_monthly(db_session: Session, year: int, month: int, user
         start_of_prev_month, end_of_prev_month = date(prev_month_year, prev_month, 1), date(prev_month_year, prev_month, prev_month_num_days)
         analysis_periods = {"current_period": (start_of_month, end_of_month), "prev_period": (start_of_prev_month, end_of_prev_month), "cumulative_this_year": (start_of_year, end_of_month), "cumulative_last_year": (date(year - 1, 1, 1), end_of_month.replace(year=year - 1))}
         comment_details = {"period_type": "Tháng", "period_number": month, "prev_period_number": prev_month, "year": year, "end_of_period_dt": end_of_month}
-    except ValueError: raise ValueError(f"Tháng {month} hoặc năm {year} không hợp lệ.")
+    except ValueError:
+        raise ValueError(f"Tháng {month} hoặc năm {year} không hợp lệ.")
     _generate_sxh_report_base(db_session, start_of_year, end_of_month, start_of_month, user_don_vi, filepath, f"Tháng {month} năm {year}", year, analysis_periods=analysis_periods, comment_details=comment_details)
-
 # ==============================================================================
 # 5. BÁO CÁO Ổ DỊCH
 # ==============================================================================
 
-# ... (Toàn bộ code của _generate_odich_sxh_analysis_data và _generate_odich_sxh_comments không thay đổi) ...
 def _generate_odich_sxh_analysis_data(db_session: Session, user_don_vi: DonViHanhChinh, calendar_obj: WeekCalendar, week_number: int):
     analysis = {}
     week_details = calendar_obj.get_week_details(week_number)
@@ -725,27 +914,28 @@ def generate_odich_sxh_report(db_session: Session, calendar_obj: WeekCalendar, w
     start_of_week_dt = week_details['ngay_bat_dau']
     reporting_units, group_by_col = _get_reporting_units(db_session, user_don_vi)
     if not reporting_units or not group_by_col: reporting_units, group_by_col = [user_don_vi], 'xa_id'
-    
+
+
     xa_ids_to_query = get_all_child_xa_ids(user_don_vi)
     if not xa_ids_to_query: return
-    
+
     # *** THAY ĐỔI: Tải trước (eager load) các ca bệnh liên quan ***
     query = db_session.query(O_Dich).options(
         joinedload(O_Dich.don_vi),
         joinedload(O_Dich.ca_benh_lien_quan).joinedload(CaBenh.don_vi)
     ).filter(
-        O_Dich.xa_id.in_(xa_ids_to_query), 
-        O_Dich.loai_benh == 'SXH', 
-        O_Dich.ngay_phat_hien >= start_of_year_dt.date(), 
+        O_Dich.xa_id.in_(xa_ids_to_query),
+        O_Dich.loai_benh == 'SXH',
+        O_Dich.ngay_phat_hien >= start_of_year_dt.date(),
         O_Dich.ngay_phat_hien <= end_of_week_dt
     )
     all_outbreaks = query.all()
     # *** THAY ĐỔI: Lấy danh sách ổ dịch trong tuần để truyền vào hàm vẽ sheet chi tiết ***
     outbreaks_in_week_for_details = [
-        od for od in all_outbreaks 
+        od for od in all_outbreaks
         if od.ngay_phat_hien and start_of_week_dt.date() <= od.ngay_phat_hien <= end_of_week_dt
     ]
-    
+
     if all_outbreaks:
         data_for_df = [{'xa_id': c.xa_id, 'dia_chi_ap': c.dia_chi_ap, 'ngay_phat_hien': c.ngay_phat_hien, 'ngay_xu_ly': c.ngay_xu_ly, 'dia_diem_xu_ly': c.dia_diem_xu_ly} for c in all_outbreaks]
         df_raw = pd.DataFrame(data_for_df)
@@ -753,7 +943,7 @@ def generate_odich_sxh_report(db_session: Session, calendar_obj: WeekCalendar, w
         df_raw['ngay_xu_ly'] = pd.to_datetime(df_raw['ngay_xu_ly'], errors='coerce')
     else:
         df_raw = pd.DataFrame(columns=['xa_id', 'dia_chi_ap', 'ngay_phat_hien', 'ngay_xu_ly', 'dia_diem_xu_ly'])
-    
+
     results_list = []
     for i, unit in enumerate(reporting_units):
         filter_value = unit.id if group_by_col == 'xa_id' else unit.ten_don_vi
@@ -763,14 +953,14 @@ def generate_odich_sxh_report(db_session: Session, calendar_obj: WeekCalendar, w
         
         dia_diem_list = df_unit.dropna(subset=['ngay_xu_ly', 'dia_diem_xu_ly'])['dia_diem_xu_ly'].tolist()
         results_list.append({
-            'STT': i + 1, 'Địa Phương': unit.ten_don_vi, 
-            'Phát hiện': len(df_tuan), 
-            'Xử lý': len(df_tuan.dropna(subset=['ngay_xu_ly'])), 
-            'Phát hiện C.dồn': len(df_unit), 
-            'Xử lý C.dồn': len(df_unit.dropna(subset=['ngay_xu_ly'])), 
+            'STT': i + 1, 'Địa Phương': unit.ten_don_vi,
+            'Phát hiện': len(df_tuan),
+            'Xử lý': len(df_tuan.dropna(subset=['ngay_xu_ly'])),
+            'Phát hiện C.dồn': len(df_unit),
+            'Xử lý C.dồn': len(df_unit.dropna(subset=['ngay_xu_ly'])),
             'Địa điểm xử lý': '\n'.join(dia_diem_list)
         })
-    
+
     df_to_write = pd.DataFrame(results_list)
     if not df_to_write.empty:
         total_row = df_to_write.drop(columns=['STT', 'Địa Phương']).sum().to_dict()
@@ -829,7 +1019,7 @@ def generate_odich_sxh_report(db_session: Session, calendar_obj: WeekCalendar, w
             'tinh_trang_hien_nay': 'Tình trạng'
         }
         _draw_outbreak_cases_details_sheet(
-            writer, 
+            writer,
             'ChiTiet_CaBenh_Trong_OD',
             outbreaks_in_week_for_details,
             cabenh_in_odich_map,
@@ -837,8 +1027,7 @@ def generate_odich_sxh_report(db_session: Session, calendar_obj: WeekCalendar, w
             formats,
             disease_type='SXH'
         )
-
-# ... (Toàn bộ code của _generate_odich_tcm_analysis_data và _generate_odich_tcm_comments không thay đổi) ...
+# ... (Toàn bộ của _generate_odich_tcm_analysis_data và _generate_odich_tcm_comments không thay đổi) ...
 def _generate_odich_tcm_analysis_data(db_session: Session, user_don_vi: DonViHanhChinh, calendar_obj: WeekCalendar, week_number: int):
     analysis = {}
     week_details = calendar_obj.get_week_details(week_number)
@@ -891,23 +1080,24 @@ def generate_odich_tcm_report(db_session: Session, calendar_obj: WeekCalendar, w
     reporting_units, group_by_col = _get_reporting_units(db_session, user_don_vi)
     if not reporting_units or not group_by_col: reporting_units, group_by_col = [user_don_vi], 'xa_id'
 
+
     xa_ids_to_query = get_all_child_xa_ids(user_don_vi)
     if not xa_ids_to_query: return
-    
+
     # *** THAY ĐỔI: Tải trước (eager load) các ca bệnh liên quan ***
     query = db_session.query(O_Dich).options(
         joinedload(O_Dich.don_vi),
         joinedload(O_Dich.ca_benh_lien_quan).joinedload(CaBenh.don_vi)
     ).filter(
-        O_Dich.xa_id.in_(xa_ids_to_query), 
-        O_Dich.loai_benh == 'TCM', 
-        O_Dich.ngay_phat_hien >= start_of_year_dt.date(), 
+        O_Dich.xa_id.in_(xa_ids_to_query),
+        O_Dich.loai_benh == 'TCM',
+        O_Dich.ngay_phat_hien >= start_of_year_dt.date(),
         O_Dich.ngay_phat_hien <= end_of_week_dt
     )
     all_outbreaks = query.all()
     # *** THAY ĐỔI: Lấy danh sách ổ dịch trong tuần để truyền vào hàm vẽ sheet chi tiết ***
     outbreaks_in_week_for_details = [
-        od for od in all_outbreaks 
+        od for od in all_outbreaks
         if od.ngay_phat_hien and start_of_week_dt.date() <= od.ngay_phat_hien <= end_of_week_dt
     ]
 
@@ -918,7 +1108,7 @@ def generate_odich_tcm_report(db_session: Session, calendar_obj: WeekCalendar, w
         df_raw['ngay_xu_ly'] = pd.to_datetime(df_raw['ngay_xu_ly'], errors='coerce')
     else:
         df_raw = pd.DataFrame(columns=['xa_id', 'dia_chi_ap', 'ngay_phat_hien', 'ngay_xu_ly', 'noi_phat_hien_tcm', 'dia_diem_xu_ly'])
-    
+
     results_list = []
     for i, unit in enumerate(reporting_units):
         filter_value = unit.id if group_by_col == 'xa_id' else unit.ten_don_vi
@@ -931,17 +1121,17 @@ def generate_odich_tcm_report(db_session: Session, calendar_obj: WeekCalendar, w
 
         dia_diem_list = df_unit.dropna(subset=['ngay_xu_ly', 'dia_diem_xu_ly'])['dia_diem_xu_ly'].tolist()
         results_list.append({'STT': i + 1, 'Địa phương': unit.ten_don_vi, 'PH Tuần TH': len(df_tuan_th), 'XL Tuần TH': len(df_tuan_th.dropna(subset=['ngay_xu_ly'])), 'PH Tuần CĐ': len(df_tuan_cd), 'XL Tuần CĐ': len(df_tuan_cd.dropna(subset=['ngay_xu_ly'])), 'PH CD TH': len(df_unit_th), 'XL CD TH': len(df_unit_th.dropna(subset=['ngay_xu_ly'])), 'PH CD CĐ': len(df_unit_cd), 'XL CD CĐ': len(df_unit_cd.dropna(subset=['ngay_xu_ly'])), 'Địa điểm xử lý': '\n'.join(dia_diem_list)})
-    
+
     df_to_write = pd.DataFrame(results_list)
     if not df_to_write.empty:
         total_row = df_to_write.drop(columns=['STT', 'Địa phương']).sum().to_dict()
         total_row['Địa phương'] = 'Tổng cộng'
         df_to_write = pd.concat([df_to_write, pd.DataFrame([total_row])], ignore_index=True)
     df_to_write = df_to_write.fillna(0)
-    
+
     analysis_data = _generate_odich_tcm_analysis_data(db_session, user_don_vi, calendar_obj, week_number)
     comments = _generate_odich_tcm_comments(analysis_data)
-    
+
     with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
         # ... (Phần vẽ sheet chính 'BaoCaoOD_TCM' không thay đổi) ...
         workbook = writer.book
@@ -990,7 +1180,7 @@ def generate_odich_tcm_report(db_session: Session, calendar_obj: WeekCalendar, w
             'tinh_trang_hien_nay': 'Tình trạng'
         }
         _draw_outbreak_cases_details_sheet(
-            writer, 
+            writer,
             'ChiTiet_CaBenh_Trong_OD',
             outbreaks_in_week_for_details,
             cabenh_in_odich_map,
@@ -1000,10 +1190,111 @@ def generate_odich_tcm_report(db_session: Session, calendar_obj: WeekCalendar, w
         )
 
 # ==============================================================================
+# 7. BÁO CÁO TÙY CHỈNH (MỚI)
+# ==============================================================================
+def generate_custom_btn_report(
+    db_session: Session,
+    user_don_vi: DonViHanhChinh,
+    start_date: date,
+    end_date: date,
+    selected_don_vi_ids: list[int],
+    filepath: str
+):
+    # ... (Phần kiểm tra quyền và xác thực đơn vị giữ nguyên) ...
+    allowed_levels = ['Tỉnh', 'Khu vực']
+    if user_don_vi.cap_don_vi not in allowed_levels:
+        raise PermissionError("Bạn không có quyền truy cập chức năng này.")
+    if not selected_don_vi_ids: raise ValueError("Vui lòng chọn ít nhất một đơn vị để báo cáo.")
+    if start_date > end_date: raise ValueError("Ngày bắt đầu không được lớn hơn ngày kết thúc.")
+    selected_units = db_session.query(DonViHanhChinh).filter(DonViHanhChinh.id.in_(selected_don_vi_ids)).order_by(DonViHanhChinh.ten_don_vi).all()
+    if len(selected_units) != len(selected_don_vi_ids): raise ValueError("Một hoặc nhiều ID đơn vị được chọn không hợp lệ.")
+    if user_don_vi.cap_don_vi == 'Khu vực':
+        for unit in selected_units:
+            if unit.parent_id != user_don_vi.id or unit.cap_don_vi != 'Xã':
+                raise PermissionError(f"Lỗi: Đơn vị '{unit.ten_don_vi}' không thuộc quyền quản lý của bạn.")
+    
+    # --- PHẦN 1: TÍNH TOÁN DỮ LIỆU ---
+    all_xa_ids_to_query = set()
+    for unit in selected_units:
+        all_xa_ids_to_query.update(get_all_child_xa_ids(unit))
+    if not all_xa_ids_to_query:
+        raise ValueError("Các đơn vị được chọn không có đơn vị cấp Xã nào.")
+        
+    reporting_year = end_date.year
+    start_of_year_dt = date(reporting_year, 1, 1)
+
+    all_cases = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(
+        CaBenh.xa_id.in_(list(all_xa_ids_to_query)),
+        CaBenh.ngay_khoi_phat.between(start_of_year_dt, end_date)
+    ).all()
+    
+    supplementary_cases = db_session.query(CaBenh).options(joinedload(CaBenh.don_vi)).filter(
+        CaBenh.xa_id.in_(list(all_xa_ids_to_query)),
+        CaBenh.ngay_import.between(start_date, end_date),
+        CaBenh.ngay_khoi_phat < start_date
+    ).all()
+    all_cases.extend(supplementary_cases)
+
+    list_cases_for_details_sheet = []
+    # === SỬA LỖI 'datetime.date' object has no attribute 'date' ===
+    for c in all_cases:
+        is_in_period = c.ngay_khoi_phat and start_date <= c.ngay_khoi_phat <= end_date
+        is_supplementary = False
+        if c.ngay_import and c.ngay_khoi_phat and c.ngay_khoi_phat < start_date:
+            ngay_import_date = c.ngay_import.date() if isinstance(c.ngay_import, datetime) else c.ngay_import
+            if start_date <= ngay_import_date <= end_date:
+                is_supplementary = True
+        
+        if is_in_period or is_supplementary:
+            list_cases_for_details_sheet.append(c)
+    # === KẾT THÚC SỬA LỖI ===
+    
+    data_list = [{'ngay_khoi_phat': c.ngay_khoi_phat, 'chan_doan_chinh': c.chan_doan_chinh, 'tinh_trang_hien_nay': c.tinh_trang_hien_nay, 'xa_id': c.xa_id, 'dia_chi_ap': c.dia_chi_ap, 'ngay_import': c.ngay_import, 'don_vi_ten': c.don_vi.ten_don_vi if c.don_vi else ''} for c in all_cases]
+    df_raw = pd.DataFrame(data_list)
+    
+    results, totals = {}, {benh: {'mac_p': 0, 'chet_p': 0, 'mac_bs': 0, 'chet_bs': 0, 'mac_cd': 0, 'chet_cd': 0} for benh in LIST_BENH_TRUYEN_NHIEM}
+    
+    if not df_raw.empty:
+        df_raw['ngay_khoi_phat'] = pd.to_datetime(df_raw['ngay_khoi_phat'], errors='coerce')
+        df_raw['ngay_import'] = pd.to_datetime(df_raw['ngay_import'], errors='coerce')
+        df_raw_ytd = df_raw[(df_raw['ngay_khoi_phat'] >= pd.to_datetime(start_of_year_dt)) & (df_raw['ngay_khoi_phat'] <= pd.to_datetime(end_date))]
+        
+        for unit in selected_units:
+            unit_child_xa_ids = get_all_child_xa_ids(unit)
+            df_unit_ytd = df_raw_ytd[df_raw_ytd['xa_id'].isin(unit_child_xa_ids)]
+            unit_results = {}
+            for benh in LIST_BENH_TRUYEN_NHIEM:
+                df_benh_ytd = df_unit_ytd[df_unit_ytd['chan_doan_chinh'] == benh]
+                df_benh_period = df_benh_ytd[df_benh_ytd['ngay_khoi_phat'].between(pd.to_datetime(start_date), pd.to_datetime(end_date))]
+                df_import_in_period = df_benh_ytd[(df_benh_ytd['ngay_import'] >= pd.to_datetime(start_date)) & (df_benh_ytd['ngay_import'] < pd.to_datetime(end_date) + timedelta(days=1))]
+                df_benh_bosung = df_import_in_period[df_import_in_period['ngay_khoi_phat'] < pd.to_datetime(start_date)]
+                
+                unit_results[benh] = {'mac_p': len(df_benh_period), 'chet_p': len(df_benh_period[df_benh_period['tinh_trang_hien_nay'] == 'Tử vong']), 'mac_bs': len(df_benh_bosung), 'chet_bs': len(df_benh_bosung[df_benh_bosung['tinh_trang_hien_nay'] == 'Tử vong']), 'mac_cd': len(df_benh_ytd), 'chet_cd': len(df_benh_ytd[df_benh_ytd['tinh_trang_hien_nay'] == 'Tử vong'])}
+                for key in totals[benh]: totals[benh][key] += unit_results[benh][key]
+            results[unit.id] = unit_results
+
+    # --- PHẦN 2: TẠO NHẬN XÉT ĐƠN GIẢN ---
+    comments = []
+    if not df_raw.empty:
+        df_current = df_raw[df_raw['ngay_khoi_phat'].between(pd.to_datetime(start_date), pd.to_datetime(end_date))]
+        comments.append(f"- Trong khoảng thời gian từ {start_date.strftime('%d/%m/%Y')} đến {end_date.strftime('%d/%m/%Y')}, các đơn vị được chọn đã ghi nhận {len(df_current)} ca mắc mới và {len(df_current[df_current['tinh_trang_hien_nay'] == 'Tử vong'])} ca tử vong.")
+        top_diseases = df_current['chan_doan_chinh'].value_counts().head(3).to_dict()
+        if top_diseases: comments.append(f"- 03 bệnh có số ca mắc mới cao nhất là: {', '.join([f'{name} ({count} ca)' for name, count in top_diseases.items()])}.")
+        
+    # --- PHẦN 3: GỌI HÀM CORE ĐỂ TẠO BÁO CÁO ---
+    _generate_btn_report_core(
+        filepath=filepath, user_don_vi=user_don_vi, report_title='BÁO CÁO BỆNH TRUYỀN NHIỄM TÙY CHỈNH',
+        period_name="Tùy chỉnh",
+        date_range_subtitle=f"Từ ngày {start_date.strftime('%d/%m/%Y')} đến ngày {end_date.strftime('%d/%m/%Y')}",
+        end_of_period_dt=end_date, reporting_units=selected_units, results=results,
+        totals=totals, list_cases_for_details_sheet=list_cases_for_details_sheet,
+        period_label="Mắc", note_text="Ghi chú: Mắc: Tổng số ca mắc trong kỳ; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn từ đầu năm",
+        comments=comments, analysis_data=None
+    )
+# ==============================================================================
 # 6. HÀM TỔNG HỢP XUẤT TẤT CẢ BÁO CÁO
 # ==============================================================================
-
-# ... (Toàn bộ code của phần 6 không thay đổi) ...
+# ... (Toàn bộ của phần 6 không thay đổi) ...
 def generate_all_reports_zip(db_session: Session, user_don_vi: DonViHanhChinh, year: int, period_type: str, period_number: int, zip_filepath: str):
     temp_dir = os.path.join(os.path.dirname(zip_filepath), str(uuid.uuid4()))
     os.makedirs(temp_dir, exist_ok=True)
@@ -1012,9 +1303,11 @@ def generate_all_reports_zip(db_session: Session, user_don_vi: DonViHanhChinh, y
             calendar_obj = WeekCalendar(year)
             period_name_part = f"Tuan{period_number}"
         elif period_type == 'month':
+            calendar_obj = None # Không cần calendar object cho tháng
             period_name_part = f"Thang{period_number}"
-        else: raise ValueError("Loại kỳ báo cáo không hợp lệ. Phải là 'week' hoặc 'month'.")
-        
+        else:
+            raise ValueError("Loại kỳ báo cáo không hợp lệ. Phải là 'week' hoặc 'month'.")
+
         report_jobs = [
             {'func': generate_benh_truyen_nhiem_report if period_type == 'week' else generate_benh_truyen_nhiem_report_monthly, 'args': (db_session, calendar_obj if period_type == 'week' else year, period_number, user_don_vi), 'filename': f"BaoCao_BTN_{user_don_vi.ten_don_vi}_{year}_{period_name_part}.xlsx"},
             {'func': generate_sxh_report if period_type == 'week' else generate_sxh_report_monthly, 'args': (db_session, calendar_obj if period_type == 'week' else year, period_number, user_don_vi), 'filename': f"BaoCao_SXH_{user_don_vi.ten_don_vi}_{year}_{period_name_part}.xlsx"}
@@ -1028,13 +1321,21 @@ def generate_all_reports_zip(db_session: Session, user_don_vi: DonViHanhChinh, y
         for job in report_jobs:
             try:
                 output_path = os.path.join(temp_dir, job['filename'])
-                job['func'](*job['args'], output_path)
+                # Sửa đổi cách truyền tham số cho báo cáo tháng
+                if period_type == 'month' and 'calendar_obj' not in job['func'].__code__.co_varnames:
+                    args = list(job['args'])
+                    if isinstance(args[1], WeekCalendar): # Loại bỏ calendar_obj nếu có
+                        args[1] = year
+                    job['func'](*args, output_path)
+                else:
+                    job['func'](*job['args'], output_path)
             except Exception as e:
                 print(f"Lỗi khi tạo file '{job['filename']}': {e}")
-             
+            
         with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(temp_dir):
-                for file in files: zipf.write(os.path.join(root, file), arcname=file)
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
