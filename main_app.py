@@ -4,7 +4,8 @@ import webview
 import socket
 from threading import Thread
 from waitress import serve # Sử dụng waitress cho server ổn định hơn
-from webapp import create_app
+# THAY ĐỔI: Import đối tượng 'app' đã được tạo sẵn
+from run import app as flask_app
 
 # --- CÁC HÀM TIỆN ÍCH ---
 
@@ -16,8 +17,8 @@ def find_free_port():
 
 # --- KHỞI TẠO ỨNG DỤNG ---
 
-# Tạo một instance của ứng dụng Flask
-flask_app = create_app()
+# THAY ĐỔI: Không cần tạo lại app ở đây nữa
+# flask_app = create_app()
 
 # Tìm một cổng trống và xây dựng URL
 port = find_free_port()
@@ -49,4 +50,5 @@ if __name__ == '__main__':
     # 3. Bắt đầu vòng lặp sự kiện của PyWebView
     #    Tham số `gui='cef'` hoặc `gui='qt'` có thể giúp tương thích tốt hơn trên Windows
     #    Hãy thử bỏ comment dòng dưới nếu gặp vấn đề hiển thị.
-    webview.start(debug=True) # Đặt debug=False khi bạn muốn đóng gói
+    #    webview.start(gui='cef', debug=False)
+    webview.start(debug=False) # Đặt debug=False khi bạn muốn đóng gói
