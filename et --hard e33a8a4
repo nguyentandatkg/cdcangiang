@@ -1,0 +1,25 @@
+[33m5f7a3e4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mNhánh-trước-lỗi[m[33m)[m sửa lỗi mất rout tìm kiếm ca bệnh chỉ điểm
+[33meaa27ad[m[33m ([m[1;31morigin/release-v1[m[33m)[m fix lỗi tiếp tục
+[33m576bb3a[m fixx lỗi mất def tạo báo cáo SXH
+[33m43b2a11[m fixx lỗi tìm kiếm ca bệnh chỉ điểm
+[33m06ea20f[m Nâng cấp tiếp tục
+[33mabeab80[m fix 1 số lỗi và nâng cấp
+[33m645b5ce[m tiếp tục nâng cấp giao diện
+[33mc02d754[m Nâng cấp các giao diện
+[33me33a8a4[m Nâng cấp waistress
+[33md73c871[m[33m ([m[1;32mTrước-khi-bị-lỗi[m[33m)[m xóa hàm không cân theiet
+[33m17d5fe9[m thêm fask catching
+[33m9c46d0a[m Add caching support and export functionality for cases
+[33m80ee7d0[m[33m ([m[1;31morigin/Cập-nhật-lại-code-cũ[m[33m)[m Chỉnh sửa 1 số tên các nội dung
+[33mff8b0b0[m Cập nhật báo cáo tùy chọn
+[33mfc67817[m Cập nhật giao diện mới của base
+[33mda8c37c[m Cập nhật giao diện trang đăng nhập
+[33m2b91df0[m Fix: Expose 'app' variable correctly in wsgi.py
+[33m26a9192[m Fix: Resolve duplicate python-dotenv dependency
+[33mb12de54[m Merge branch 'main' of https://github.com/nguyentandatkg/cdcangiang
+[33m8202407[m Fix: Them python-dotenv vao dependencies
+[33m63c8919[m Update requirements.txt
+[33m3d0a384[m Fix: Them python-dotenv vao dependencies
+[33m92f0144[m Add gunicorn to requirements
+[33m4232a89[m Initial commit with gitignore
+[33m2455dc6[m First commit: Initial project setup
