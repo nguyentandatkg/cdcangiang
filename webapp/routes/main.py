@@ -1145,7 +1145,7 @@ def api_search_cases():
     API endpoint để tìm kiếm ca bệnh và trả về kết quả JSON.
     Chỉ cho phép admin và user cấp khu vực truy cập.
     """
-    ## <<< SỬA LỖI 3: Cập nhật quyền và logic cho API
+    # SỬA LỖI: Đảm bảo chỉ admin/khuvuc được truy cập
     if session.get('role') not in ['admin', 'khuvuc']:
         return jsonify({'error': 'Không có quyền truy cập'}), 403
 
@@ -1154,7 +1154,7 @@ def api_search_cases():
 
     search_term = request.args.get('term', '').strip()
     loai_benh = request.args.get('loai_benh', '')
-    
+
     query = db.query(CaBenh).options(joinedload(CaBenh.don_vi))
 
     # Lọc theo phạm vi của khu vực
@@ -1162,13 +1162,15 @@ def api_search_cases():
         child_xa_ids = get_all_child_xa_ids(user_don_vi)
         query = query.filter(CaBenh.xa_id.in_(child_xa_ids))
 
+    # Lọc theo tên hoặc mã bệnh nhân
     if search_term:
         search_term_lower = search_term.lower()
         query = query.filter(
-            (func.lower(CaBenh.ho_ten).like(f'%{search_term_lower}%')) | 
+            (func.lower(CaBenh.ho_ten).like(f'%{search_term_lower}%')) |
             (CaBenh.ma_so_benh_nhan.ilike(f'%{search_term}%'))
         )
-    
+
+    # Lọc đúng loại bệnh (mapping sang tên bệnh)
     benh_map_reverse = {
         'SXH': 'Sốt xuất huyết Dengue',
         'TCM': 'Tay - chân - miệng'
@@ -1176,7 +1178,10 @@ def api_search_cases():
     if loai_benh in benh_map_reverse:
         query = query.filter(CaBenh.chan_doan_chinh == benh_map_reverse[loai_benh])
 
+    # Chỉ lấy ca bệnh chưa thuộc ổ dịch
     query = query.filter(CaBenh.o_dich_id.is_(None))
+
+    # Sắp xếp theo ngày khởi phát mới nhất, giới hạn 50 kết quả
     cases = query.order_by(CaBenh.ngay_khoi_phat.desc()).limit(50).all()
 
     results = [
@@ -1192,5 +1197,5 @@ def api_search_cases():
             'dia_chi_chi_tiet': case.dia_chi_chi_tiet or ''
         } for case in cases
     ]
-    
+
     return jsonify(results)

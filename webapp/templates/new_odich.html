@@ -229,11 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function toggleDiseaseFields() {
         const selectedValue = loaiBenhSelect.value;
-        
         tcmFields.classList.add('d-none');
         sxhFields.classList.add('d-none');
         placeholder.classList.add('d-none');
-
         if (selectedValue === 'TCM') {
             tcmFields.classList.remove('d-none');
         } else if (selectedValue === 'SXH') {
@@ -242,27 +240,21 @@ document.addEventListener('DOMContentLoaded', function() {
             placeholder.classList.remove('d-none');
         }
     }
-    
     loaiBenhSelect.addEventListener('change', toggleDiseaseFields);
-    toggleDiseaseFields(); // Chạy lần đầu khi tải trang
+    toggleDiseaseFields();
 
     // === PART 2: LOGIC TÌM KIẾM CA BỆNH TRONG MODAL ===
     const searchModalEl = document.getElementById('searchCaseModal');
     if (!searchModalEl) return;
-    
     const searchModal = new bootstrap.Modal(searchModalEl);
     const caseSearchInput = document.getElementById('caseSearchInput');
     const caseSearchBtn = document.getElementById('caseSearchBtn');
     const caseSearchResultsTbody = document.getElementById('caseSearchResults');
-    
-    // =========================================================================
-    // SỬA LỖI CÚ PHÁP JINJA2 TẠI ĐÂY
-    // =========================================================================
-    const mainForm = document.querySelector('form[action="{{ url_for("main.new_odich_page") }}"]');
-    // =========================================================================
 
+    // SỬA LỖI: Tìm đúng form bằng thuộc tính name
+    const mainForm = document.forms['importForm'] || document.querySelector('form[name="importForm"]') || document.querySelector('form[action^="/odich/new"]') || document.querySelector('form[action="{{ url_for(\'main.new_odich_page\') }}"]') || document.querySelector('form');
     const xaIdHiddenInput = document.getElementById('xa_id_hidden_input');
-    const xaTextInput = document.getElementById('xa_ten_text_input'); 
+    const xaTextInput = document.getElementById('xa_ten_text_input');
     const xaSelectAdmin = document.getElementById('xa_id_select_admin');
     const diaDiemTextarea = mainForm.querySelector('textarea[name="dia_diem_xu_ly"]');
     const mainFormColumn = document.getElementById('main-form-column');
@@ -270,21 +262,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const performSearch = async () => {
         const term = caseSearchInput.value;
         const loaiBenh = loaiBenhSelect.value;
-
         if (!loaiBenh) {
             alert('Vui lòng chọn "Loại bệnh" trước khi tìm kiếm ca bệnh!');
             return;
         }
-
         caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> Đang tìm...</td></tr>`;
-
         const params = new URLSearchParams({ term: term, loai_benh: loaiBenh });
         const searchUrl = `{{ url_for('main.api_search_cases') }}?${params.toString()}`;
-
         try {
             const response = await fetch(searchUrl);
             const cases = await response.json();
-
             caseSearchResultsTbody.innerHTML = '';
             if (cases.length > 0) {
                 cases.forEach(caseData => {
@@ -316,36 +303,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('select-case-btn')) {
             const caseData = JSON.parse(e.target.dataset.case);
 
+            // Cập nhật xã
             if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
             if (xaTextInput) xaTextInput.value = caseData.xa_ten;
             if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
 
+            // Cập nhật địa chỉ gợi ý
             if (diaDiemTextarea) {
                 let diaDiemGoiY = `${caseData.dia_chi_chi_tiet}, ${caseData.dia_chi_ap}`;
                 if (diaDiemGoiY.startsWith(', ')) diaDiemGoiY = diaDiemGoiY.substring(2);
                 if (diaDiemGoiY.endsWith(', ')) diaDiemGoiY = diaDiemGoiY.slice(0, -2);
                 diaDiemTextarea.value = diaDiemGoiY;
             }
-            
+
+            // Cập nhật hidden input case_id_from_url
             let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
             if (oldHiddenInput) oldHiddenInput.remove();
-            
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'case_id_from_url';
             hiddenInput.value = caseData.id;
             mainForm.appendChild(hiddenInput);
-            
+
             searchModal.hide();
-            
+
+            // Hiển thị thông báo đã chọn ca bệnh chỉ điểm
             const oldInfo = document.getElementById('case-info-alert');
             if(oldInfo) oldInfo.remove();
-            
             const infoDiv = document.createElement('div');
             infoDiv.className = 'alert alert-info mt-3';
             infoDiv.id = 'case-info-alert';
             infoDiv.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>Đã chọn ca bệnh chỉ điểm: <strong>${caseData.ho_ten}</strong>. Thông tin đã được tự động điền vào form.`;
-            
             if (mainFormColumn) {
                 mainFormColumn.insertBefore(infoDiv, mainFormColumn.firstChild);
             }
