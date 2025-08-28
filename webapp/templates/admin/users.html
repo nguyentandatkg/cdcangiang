@@ -27,15 +27,16 @@
                 <div class="col-lg-6">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="ten_dang_nhap" placeholder="Tìm theo tên đăng nhập..." value="{{ request.args.get('ten_dang_nhap', '') }}">
+                        <input type="text" class="form-control" name="ten_dang_nhap" placeholder="Tìm theo tên đăng nhập..." value="{{ filters.get('ten_dang_nhap', '') }}">
                     </div>
                 </div>
                 <div class="col-lg-3">
                      <select class="form-select" name="quyen_han" onchange="this.form.submit()">
                         <option value="">-- Lọc theo quyền --</option>
-                        <option value="admin" {% if request.args.get('quyen_han') == 'admin' %}selected{% endif %}>Admin</option>
-                        <option value="khuvuc" {% if request.args.get('quyen_han') == 'khuvuc' %}selected{% endif %}>Khu vực</option>
-                        <option value="xa" {% if request.args.get('quyen_han') == 'xa' %}selected{% endif %}>Xã</option>
+                        <option value="admin" {% if filters.get('quyen_han') == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="tinh" {% if filters.get('quyen_han') == 'tinh' %}selected{% endif %}>Tỉnh</option>
+                        <option value="khuvuc" {% if filters.get('quyen_han') == 'khuvuc' %}selected{% endif %}>Khu vực</option>
+                        <option value="xa" {% if filters.get('quyen_han') == 'xa' %}selected{% endif %}>Xã</option>
                     </select>
                 </div>
                 <div class="col-lg-3 d-flex">

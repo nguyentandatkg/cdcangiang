@@ -134,8 +134,14 @@ def manage_users():
 
     page = request.args.get('page', 1, type=int)
     PER_PAGE = 20
+    
+    # NÂNG CẤP: Lấy các tham số lọc từ URL
+    filters = {
+        'ten_dang_nhap': request.args.get('ten_dang_nhap', '').strip(),
+        'quyen_han': request.args.get('quyen_han', '').strip()
+    }
 
-    users_paginated, total_items = get_users_list(page=page, per_page=PER_PAGE)
+    users_paginated, total_items = get_users_list(page=page, per_page=PER_PAGE, filters=filters)
     pagination = {
         'page': page,
         'per_page': PER_PAGE,
@@ -151,7 +157,7 @@ def manage_users():
         users_list=users_paginated,
         don_vi_list=don_vi_list_for_dropdown,
         pagination=pagination,
-        filters={}
+        filters=filters # Truyền filters vào template để giữ giá trị trên form
     )
 
 

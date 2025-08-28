@@ -109,9 +109,10 @@
                     <!-- Flash messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
-                            {% for category, message in messages %}
+                            {% for category, msg_data in messages %}
                                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
+                                    {# SỬA LỖI: Lấy message từ dictionary thay vì in cả object #}
+                                    {{ msg_data.message if msg_data.message else msg_data }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             {% endfor %}

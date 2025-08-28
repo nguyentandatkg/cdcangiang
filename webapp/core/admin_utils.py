@@ -89,10 +89,18 @@ def get_user_by_id(user_id: int):
     try: return db.query(NguoiDung).options(joinedload(NguoiDung.don_vi)).get(user_id)
     finally: db.close()
 
-def get_users_list(page: int = 1, per_page: int = 20):
+def get_users_list(page: int = 1, per_page: int = 20, filters: dict = None):
     db = get_db_session()
     try:
         query = db.query(NguoiDung).options(joinedload(NguoiDung.don_vi))
+        
+        # NÂNG CẤP: Áp dụng bộ lọc nếu có
+        if filters:
+            if filters.get('ten_dang_nhap'):
+                query = query.filter(NguoiDung.ten_dang_nhap.ilike(f"%{filters['ten_dang_nhap']}%"))
+            if filters.get('quyen_han'):
+                query = query.filter(NguoiDung.quyen_han == filters['quyen_han'])
+
         total_items = query.count()
         users = query.order_by(NguoiDung.ten_dang_nhap).limit(per_page).offset((page - 1) * per_page).all()
         return users, total_items
