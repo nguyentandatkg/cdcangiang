@@ -17,7 +17,7 @@
 </div>
 
 <!-- FORM NHẬP LIỆU -->
-<form method="POST" action="{{ url_for('main.new_odich_page') }}">
+<form method="POST" action="{{ url_for('main.new_odich_page') }}" id="new-odich-form">
     {% if case %}<input type="hidden" name="case_id_from_url" value="{{ case.id }}">{% endif %}
     
     <div class="row g-4">
@@ -160,11 +160,13 @@
                 <div class="card-body">
                     <h5 class="fw-bold text-secondary"><i class="bi bi-lightbulb-fill me-2"></i>Hướng dẫn</h5>
                     <hr>
+                    {% if session.get('role') in ['admin', 'khuvuc'] %}
                      <div class="d-grid mb-3">
                          <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchCaseModal">
                             <i class="bi bi-search me-2"></i> Tìm ca bệnh chỉ điểm
                         </button>
                     </div>
+                    {% endif %}
                     <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Các trường có dấu (*) là bắt buộc.</p>
                     <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Chọn <strong>Loại bệnh</strong> để hiển thị các thông tin cần khai báo thêm.</p>
                     <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Nếu tạo từ ca bệnh, ổ dịch sẽ tự động được liên kết với ca bệnh đó.</p>
@@ -244,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     loaiBenhSelect.addEventListener('change', toggleDiseaseFields);
-    toggleDiseaseFields(); // Chạy lần đầu khi tải trang
+    toggleDiseaseFields();
 
     // === PART 2: LOGIC TÌM KIẾM CA BỆNH TRONG MODAL ===
     const searchModalEl = document.getElementById('searchCaseModal');
@@ -255,11 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const caseSearchBtn = document.getElementById('caseSearchBtn');
     const caseSearchResultsTbody = document.getElementById('caseSearchResults');
     
-    // =========================================================================
-    // SỬA LỖI CÚ PHÁP JINJA2 TẠI ĐÂY
-    // =========================================================================
-    const mainForm = document.querySelector('form[action="{{ url_for("main.new_odich_page") }}"]');
-    // =========================================================================
+    const mainForm = document.getElementById('new-odich-form');
+    
+    if (!mainForm) {
+        console.error("Lỗi: Không tìm thấy form chính '#new-odich-form'.");
+        return;
+    }
 
     const xaIdHiddenInput = document.getElementById('xa_id_hidden_input');
     const xaTextInput = document.getElementById('xa_ten_text_input'); 
@@ -283,6 +286,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const response = await fetch(searchUrl);
+            if (!response.ok) {
+                throw new Error(`Lỗi mạng: ${response.status}`);
+            }
             const cases = await response.json();
 
             caseSearchResultsTbody.innerHTML = '';
@@ -290,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cases.forEach(caseData => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${caseData.ma_so_benh_nhan}</td>
+                        <td>${caseData.ma_so_benh_nhan || 'N/A'}</td>
                         <td>${caseData.ho_ten}</td>
                         <td>${caseData.ngay_khoi_phat}</td>
                         <td>${caseData.xa_ten}</td>
@@ -305,28 +311,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Lỗi khi tìm kiếm ca bệnh:', error);
-            caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Có lỗi xảy ra, vui lòng thử lại.</td></tr>`;
+            caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Có lỗi xảy ra, vui lòng kiểm tra Console (F12).</td></tr>`;
         }
     };
 
     caseSearchBtn.addEventListener('click', performSearch);
-    caseSearchInput.addEventListener('keypress', e => e.key === 'Enter' && performSearch());
+    caseSearchInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Ngăn form submit khi nhấn Enter
+            performSearch();
+        }
+    });
 
     caseSearchResultsTbody.addEventListener('click', function(e) {
         if (e.target.classList.contains('select-case-btn')) {
             const caseData = JSON.parse(e.target.dataset.case);
 
+            // Cập nhật xã
             if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
             if (xaTextInput) xaTextInput.value = caseData.xa_ten;
             if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
 
+            // Cập nhật địa điểm xử lý
             if (diaDiemTextarea) {
-                let diaDiemGoiY = `${caseData.dia_chi_chi_tiet}, ${caseData.dia_chi_ap}`;
-                if (diaDiemGoiY.startsWith(', ')) diaDiemGoiY = diaDiemGoiY.substring(2);
-                if (diaDiemGoiY.endsWith(', ')) diaDiemGoiY = diaDiemGoiY.slice(0, -2);
-                diaDiemTextarea.value = diaDiemGoiY;
+                let diaDiemGoiY = `Ổ dịch tại ${caseData.dia_chi_chi_tiet || ''}, ${caseData.dia_chi_ap || ''} (BN ${caseData.ho_ten})`;
+                diaDiemTextarea.value = diaDiemGoiY.replace(/ ,/g, ',');
             }
             
+            // Thêm case_id vào form
             let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
             if (oldHiddenInput) oldHiddenInput.remove();
             
@@ -338,16 +350,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             searchModal.hide();
             
-            const oldInfo = document.getElementById('case-info-alert');
-            if(oldInfo) oldInfo.remove();
+            // Xóa card/alert cũ nếu có
+            const oldInfoCard = document.getElementById('case-info-card');
+            if(oldInfoCard) oldInfoCard.remove();
+            const oldInfoAlert = document.getElementById('case-info-alert');
+            if(oldInfoAlert) oldInfoAlert.remove();
             
+            // Hiển thị thông báo đã chọn ca bệnh
             const infoDiv = document.createElement('div');
-            infoDiv.className = 'alert alert-info mt-3';
+            infoDiv.className = 'alert alert-info';
             infoDiv.id = 'case-info-alert';
-            infoDiv.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>Đã chọn ca bệnh chỉ điểm: <strong>${caseData.ho_ten}</strong>. Thông tin đã được tự động điền vào form.`;
+            infoDiv.innerHTML = `<h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Đã chọn ca bệnh chỉ điểm</h5><p class="mb-0">Đã chọn BN <strong>${caseData.ho_ten}</strong>. Thông tin đã được điền vào form.</p>`;
             
             if (mainFormColumn) {
-                mainFormColumn.insertBefore(infoDiv, mainFormColumn.firstChild);
+                const card1 = mainFormColumn.querySelector('.card');
+                if (card1) {
+                    card1.insertAdjacentElement('afterend', infoDiv);
+                }
             }
         }
     });

@@ -5,102 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title | default('Hệ thống Bệnh truyền nhiễm') }}</title>
     
-    {# --- BLOCK HEAD ĐÃ ĐƯỢC THÊM VÀO ĐÂY --- #}
-    {% block head %}
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-        <style>
-            body {
-                padding-top: 5rem;
-                background-color: #f4f7f6;
-                color: #212529;
-                transition: background-color 0.3s, color 0.3s;
-                min-height: 100vh; /* Đảm bảo body đủ cao để footer xuống cuối */
-                display: flex;
-                flex-direction: column;
-            }
+    <style>
+        body {
+            padding-top: 5rem;
+            background-color: #f4f7f6;
+            color: #212529;
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh; /* Đảm bảo body đủ cao để footer xuống cuối */
+            display: flex;
+            flex-direction: column;
+        }
 
-            /* Navbar */
-            .navbar {
-                background: rgba(0, 109, 119, 0.85);
-                backdrop-filter: blur(6px);
-                transition: background-color 0.4s, box-shadow 0.3s;
-            }
-            .navbar.scrolled {
-                background-color: #006d77 !important;
-                box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-            }
-            .navbar-brand {
-                color: #ffffff !important;
-                font-size: 1.3rem;
-                letter-spacing: 0.5px;
-            }
-            .navbar-brand:hover {
-                color: #83c5be !important;
-            }
-            .nav-link {
-                color: #e6f2f1 !important;
-                transition: color 0.2s, transform 0.2s, text-shadow 0.2s;
-            }
-            .nav-link:hover {
-                color: #83c5be !important;
-                transform: translateY(-2px);
-                text-shadow: 0 0 4px rgba(0,0,0,0.2);
-            }
-            .btn-mode {
-                border: none;
-                background: transparent;
-            }
-            .cdc-logo-navbar { /* Style cho logo trên navbar */
-                height: 40px; /* Chiều cao cố định */
-                margin-right: 0.75rem;
-                border-radius: 5px; /* Bo tròn nhẹ các góc của logo */
-            }
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 109, 119, 0.85);
+            backdrop-filter: blur(6px);
+            transition: background-color 0.4s, box-shadow 0.3s;
+        }
+        .navbar.scrolled {
+            background-color: #006d77 !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+        .navbar-brand {
+            color: #ffffff !important;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+        }
+        .navbar-brand:hover {
+            color: #83c5be !important;
+        }
+        .nav-link {
+            color: #e6f2f1 !important;
+            transition: color 0.2s, transform 0.2s, text-shadow 0.2s;
+        }
+        .nav-link:hover {
+            color: #83c5be !important;
+            transform: translateY(-2px);
+            text-shadow: 0 0 4px rgba(0,0,0,0.2);
+        }
+        .btn-mode {
+            border: none;
+            background: transparent;
+        }
+        .cdc-logo-navbar { /* Style cho logo trên navbar */
+            height: 40px; /* Chiều cao cố định */
+            margin-right: 0.75rem;
+            border-radius: 5px; /* Bo tròn nhẹ các góc của logo */
+        }
 
-            /* Loading Spinner */
-            #loadingOverlay {
-                position: fixed;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                background: rgba(255,255,255,0.7);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 2000;
-                display: none;
-            }
-            body.dark-mode #loadingOverlay {
-                 background: rgba(0,0,0,0.7);
-            }
+        /* Loading Spinner */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+        body.dark-mode #loadingOverlay {
+             background: rgba(0,0,0,0.7);
+        }
 
-            /* Main content flex grow to push footer down */
-            main.container {
-                flex-grow: 1;
-            }
+        /* Main content flex grow to push footer down */
+        main.container {
+            flex-grow: 1;
+        }
 
-            /* Footer Styles */
-            footer {
-                background-color: #e9ecef;
-                padding: 2rem 0;
-                margin-top: auto; /* Đẩy footer xuống cuối trang */
-                border-top: 1px solid #dee2e6;
-                color: #495057;
-                font-size: 0.9rem;
-            }
-            footer a {
-                color: #006d77;
-                text-decoration: none;
-            }
-            footer a:hover {
-                color: #004d55;
-                text-decoration: underline;
-            }
-            footer strong {
-                color: #006d77;
-            }
-        </style>
-    {% endblock head %}
+        /* Footer Styles */
+        footer {
+            background-color: #e9ecef;
+            padding: 2rem 0;
+            margin-top: auto; /* Đẩy footer xuống cuối trang */
+            border-top: 1px solid #dee2e6;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: #006d77;
+            text-decoration: none;
+        }
+        footer a:hover {
+            color: #004d55;
+            text-decoration: underline;
+        }
+        footer strong {
+            color: #006d77;
+        }
+    </style>
+    
+    {# Block này để các trang con có thể thêm CSS hoặc thẻ meta riêng #}
+    {% block head %}{% endblock head %}
 </head>
 <body>
     <!-- Loading Spinner -->
@@ -186,66 +186,70 @@
         </div>
     </footer>
 
-    {# --- BLOCK SCRIPTS ĐÃ ĐƯỢC SỬA LẠI ĐÚNG CHUẨN --- #}
-    {% block scripts %}
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            // Navbar đổi màu khi cuộn
-            window.addEventListener("scroll", function () {
-                const navbar = document.querySelector(".navbar");
-                const modeToggle = document.querySelector("#modeToggle");
-                if (window.scrollY > 50) {
-                    navbar.classList.add("scrolled");
-                    if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                        modeToggle.classList.replace("text-dark", "text-light");
-                    }
-                } else {
-                    navbar.classList.remove("scrolled");
-                    if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                        modeToggle.classList.replace("text-light", "text-dark");
-                    }
-                }
-            });
-            
-            // Lưu trạng thái theme khi tải lại
-            window.addEventListener("DOMContentLoaded", () => {
-                if (localStorage.getItem("theme") === "dark") {
-                    document.body.classList.add("dark-mode");
-                    const icon = document.querySelector("#modeToggle i");
-                    const modeToggle = document.querySelector("#modeToggle");
-                    if(icon) icon.classList.replace("bi-moon-stars", "bi-brightness-high");
-                    if(modeToggle) modeToggle.classList.replace("text-dark", "text-light"); // Đảm bảo icon luôn sáng trong dark mode
-                }
-            });
+    <!-- === ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG NHẤT === -->
+    
+    <!-- 1. Tải thư viện Bootstrap. Dòng này nằm ngoài block và sẽ luôn được tải. -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-            // Show loading overlay khi submit form một cách an toàn hơn
-            document.addEventListener('DOMContentLoaded', function() {
-                const forms = document.querySelectorAll('form');
-                forms.forEach(form => {
-                    form.addEventListener('submit', function(e) {
-                        // Chỉ hiển thị spinner nếu form không có class 'no-spinner'
-                        if (!this.classList.contains('no-spinner')) {
-                            const overlay = document.getElementById('loadingOverlay');
-                            if (overlay) {
-                                overlay.style.display = 'flex';
-                            }
+    <!-- 2. Các script CHUNG của toàn bộ trang web. Chúng cũng nằm ngoài block. -->
+    <script>
+        // Navbar đổi màu khi cuộn
+        window.addEventListener("scroll", function () {
+            const navbar = document.querySelector(".navbar");
+            const modeToggle = document.querySelector("#modeToggle");
+            if (window.scrollY > 50) {
+                navbar.classList.add("scrolled");
+                if (modeToggle && !document.body.classList.contains("dark-mode")) {
+                    modeToggle.classList.replace("text-dark", "text-light");
+                }
+            } else {
+                navbar.classList.remove("scrolled");
+                if (modeToggle && !document.body.classList.contains("dark-mode")) {
+                    modeToggle.classList.replace("text-light", "text-dark");
+                }
+            }
+        });
+        
+        // Lưu trạng thái theme khi tải lại
+        window.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+                const icon = document.querySelector("#modeToggle i");
+                const modeToggle = document.querySelector("#modeToggle");
+                if(icon) icon.classList.replace("bi-moon-stars", "bi-brightness-high");
+                if(modeToggle) modeToggle.classList.replace("text-dark", "text-light");
+            }
+        });
+
+        // Show loading overlay khi submit form
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!this.classList.contains('no-spinner')) {
+                        const overlay = document.getElementById('loadingOverlay');
+                        if (overlay) {
+                            overlay.style.display = 'flex';
                         }
-                    });
+                    }
                 });
             });
-            
-            // Tự động khởi tạo và hiển thị các thông báo Toast
-            window.addEventListener('DOMContentLoaded', (event) => {
-                const toastElList = document.querySelectorAll('.toast');
-                toastElList.forEach(toastEl => {
-                    const toast = new bootstrap.Toast(toastEl, {
-                        delay: 5000 // Tự động ẩn sau 5 giây
-                    });
-                    toast.show(); // Hiển thị toast
+        });
+        
+        // Tự động khởi tạo và hiển thị các thông báo Toast
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const toastElList = document.querySelectorAll('.toast');
+            toastElList.forEach(toastEl => {
+                const toast = new bootstrap.Toast(toastEl, {
+                    delay: 5000 
                 });
+                toast.show();
             });
-        </script>
-    {% endblock scripts %}
+        });
+    </script>
+    
+    <!-- 3. Khối block scripts TRỐNG. Đây là nơi các trang con sẽ chèn script của riêng chúng vào. -->
+    {% block scripts %}{% endblock scripts %}
 
 </body>
 </html>
