@@ -23,10 +23,30 @@
     <div class="row g-4">
         <!-- CỘT TRÁI: FORM CHÍNH -->
         <div class="col-lg-8" id="main-form-column">
+
+            <!-- ======================================================================= -->
+            <!-- THAY ĐỔI: VÙNG HIỂN THỊ CA BỆNH CHỈ ĐIỂM ĐƯỢC ĐẶT Ở ĐÂY -->
+            <!-- ======================================================================= -->
+            <div id="index-case-display-wrapper" class="card shadow-sm border-info mb-4 {% if not case %}d-none{% endif %}">
+                <div class="card-header bg-info-subtle d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Thông tin Ca bệnh Chỉ điểm</h5>
+                    <button type="button" class="btn-close" id="deselect-case-btn" aria-label="Bỏ chọn" title="Bỏ chọn ca bệnh này"></button>
+                </div>
+                <div class="card-body" id="index-case-display-body">
+                    {% if case %}
+                        <!-- Hiển thị thông tin nếu trang được tải với một ca bệnh có sẵn -->
+                        <p class="mb-1"><strong>Họ tên:</strong> {{ case.ho_ten }}</p>
+                        <p class="mb-1"><strong>Mã BN:</strong> {{ case.id }}</p>
+                        <p class="mb-1"><strong>Khởi phát:</strong> {{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'N/A' }}</p>
+                        <p class="mb-0"><strong>Địa chỉ:</strong> {{ case.dia_chi_ap }}, {{ case.don_vi.ten_don_vi }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Card 1: Thông tin cơ bản -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">1</span>Thông tin Cơ bản</h5>
+                    <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">1</span>Thông tin Ổ dịch</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -139,23 +159,7 @@
         
         <!-- CỘT PHẢI: THÔNG TIN PHỤ -->
         <div class="col-lg-4">
-            {% if case %}
-            <div class="card shadow-sm border-0 mb-4" id="case-info-card">
-                <div class="card-header bg-info-subtle">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Ca bệnh Chỉ điểm</h5>
-                </div>
-                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Họ tên:</strong> {{ case.ho_ten }}</li>
-                    <li class="list-group-item"><strong>Mã BN:</strong> {{ case.id }}</li>
-                    <li class="list-group-item"><strong>Chẩn đoán:</strong> {{ case.chan_doan_chinh }}</li>
-                    <li class="list-group-item"><strong>Khởi phát:</strong> {{ case.ngay_khoi_phat.strftime('%d/%m/%Y') }}</li>
-                </ul>
-                <div class="card-footer small text-muted">
-                    Thông tin từ ca bệnh này sẽ được tự động điền vào form.
-                </div>
-            </div>
-            {% endif %}
-            
+            <!-- THAY ĐỔI: ĐÃ XÓA CARD THÔNG TIN CA BỆNH Ở ĐÂY -->
             <div class="card shadow-sm border-0 bg-light">
                 <div class="card-body">
                     <h5 class="fw-bold text-secondary"><i class="bi bi-lightbulb-fill me-2"></i>Hướng dẫn</h5>
@@ -231,20 +235,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function toggleDiseaseFields() {
         const selectedValue = loaiBenhSelect.value;
-        
         tcmFields.classList.add('d-none');
         sxhFields.classList.add('d-none');
         placeholder.classList.add('d-none');
-
-        if (selectedValue === 'TCM') {
-            tcmFields.classList.remove('d-none');
-        } else if (selectedValue === 'SXH') {
-            sxhFields.classList.remove('d-none');
-        } else {
-            placeholder.classList.remove('d-none');
-        }
+        if (selectedValue === 'TCM') tcmFields.classList.remove('d-none');
+        else if (selectedValue === 'SXH') sxhFields.classList.remove('d-none');
+        else placeholder.classList.remove('d-none');
     }
-    
     loaiBenhSelect.addEventListener('change', toggleDiseaseFields);
     toggleDiseaseFields();
 
@@ -256,11 +253,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const caseSearchInput = document.getElementById('caseSearchInput');
     const caseSearchBtn = document.getElementById('caseSearchBtn');
     const caseSearchResultsTbody = document.getElementById('caseSearchResults');
-    
     const mainForm = document.getElementById('new-odich-form');
+
+    // THAY ĐỔI: Lấy tham chiếu đến các phần tử của card hiển thị thông tin
+    const indexCaseWrapper = document.getElementById('index-case-display-wrapper');
+    const indexCaseBody = document.getElementById('index-case-display-body');
+    const deselectBtn = document.getElementById('deselect-case-btn');
     
-    if (!mainForm) {
-        console.error("Lỗi: Không tìm thấy form chính '#new-odich-form'.");
+    if (!mainForm || !indexCaseWrapper || !indexCaseBody || !deselectBtn) {
+        console.error("Lỗi: Một trong các thành phần giao diện chính bị thiếu.");
         return;
     }
 
@@ -268,29 +269,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const xaTextInput = document.getElementById('xa_ten_text_input'); 
     const xaSelectAdmin = document.getElementById('xa_id_select_admin');
     const diaDiemTextarea = mainForm.querySelector('textarea[name="dia_diem_xu_ly"]');
-    const mainFormColumn = document.getElementById('main-form-column');
 
     const performSearch = async () => {
         const term = caseSearchInput.value;
         const loaiBenh = loaiBenhSelect.value;
-
         if (!loaiBenh) {
             alert('Vui lòng chọn "Loại bệnh" trước khi tìm kiếm ca bệnh!');
             return;
         }
-
         caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> Đang tìm...</td></tr>`;
-
         const params = new URLSearchParams({ term: term, loai_benh: loaiBenh });
         const searchUrl = `{{ url_for('main.api_search_cases') }}?${params.toString()}`;
-
         try {
             const response = await fetch(searchUrl);
-            if (!response.ok) {
-                throw new Error(`Lỗi mạng: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Lỗi mạng: ${response.status}`);
             const cases = await response.json();
-
             caseSearchResultsTbody.innerHTML = '';
             if (cases.length > 0) {
                 cases.forEach(caseData => {
@@ -300,10 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${caseData.ho_ten}</td>
                         <td>${caseData.ngay_khoi_phat}</td>
                         <td>${caseData.xa_ten}</td>
-                        <td>
-                            <button class="btn btn-sm btn-success select-case-btn" data-case='${JSON.stringify(caseData)}'>Chọn</button>
-                        </td>
-                    `;
+                        <td><button class="btn btn-sm btn-success select-case-btn" data-case='${JSON.stringify(caseData)}'>Chọn</button></td>`;
                     caseSearchResultsTbody.appendChild(row);
                 });
             } else {
@@ -314,61 +304,68 @@ document.addEventListener('DOMContentLoaded', function() {
             caseSearchResultsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Có lỗi xảy ra, vui lòng kiểm tra Console (F12).</td></tr>`;
         }
     };
-
     caseSearchBtn.addEventListener('click', performSearch);
     caseSearchInput.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Ngăn form submit khi nhấn Enter
+            e.preventDefault();
             performSearch();
         }
     });
 
+    // THAY ĐỔI: Hàm cập nhật giao diện khi chọn một ca bệnh
+    function selectIndexCase(caseData) {
+        // Cập nhật thông tin trong card
+        indexCaseBody.innerHTML = `
+            <p class="mb-1"><strong>Họ tên:</strong> ${caseData.ho_ten}</p>
+            <p class="mb-1"><strong>Mã BN:</strong> ${caseData.id}</p>
+            <p class="mb-1"><strong>Khởi phát:</strong> ${caseData.ngay_khoi_phat}</p>
+            <p class="mb-0"><strong>Địa chỉ:</strong> ${caseData.dia_chi_ap}, ${caseData.xa_ten}</p>`;
+        indexCaseWrapper.classList.remove('d-none'); // Hiển thị card
+
+        // Điền thông tin vào form
+        if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
+        if (xaTextInput) xaTextInput.value = caseData.xa_ten;
+        if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
+        if (diaDiemTextarea) {
+            let diaDiemGoiY = `Ổ dịch tại ${caseData.dia_chi_chi_tiet || ''}, ${caseData.dia_chi_ap || ''} (BN ${caseData.ho_ten})`;
+            diaDiemTextarea.value = diaDiemGoiY.replace(/ ,/g, ',');
+        }
+
+        // Thêm/cập nhật case_id ẩn
+        let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
+        if (oldHiddenInput) oldHiddenInput.remove();
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'case_id_from_url';
+        hiddenInput.value = caseData.id;
+        mainForm.appendChild(hiddenInput);
+
+        // Khóa mục chọn loại bệnh
+        loaiBenhSelect.disabled = true;
+    }
+
     caseSearchResultsTbody.addEventListener('click', function(e) {
         if (e.target.classList.contains('select-case-btn')) {
             const caseData = JSON.parse(e.target.dataset.case);
-
-            // Cập nhật xã
-            if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
-            if (xaTextInput) xaTextInput.value = caseData.xa_ten;
-            if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
-
-            // Cập nhật địa điểm xử lý
-            if (diaDiemTextarea) {
-                let diaDiemGoiY = `Ổ dịch tại ${caseData.dia_chi_chi_tiet || ''}, ${caseData.dia_chi_ap || ''} (BN ${caseData.ho_ten})`;
-                diaDiemTextarea.value = diaDiemGoiY.replace(/ ,/g, ',');
-            }
-            
-            // Thêm case_id vào form
-            let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
-            if (oldHiddenInput) oldHiddenInput.remove();
-            
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'case_id_from_url';
-            hiddenInput.value = caseData.id;
-            mainForm.appendChild(hiddenInput);
-            
+            selectIndexCase(caseData);
             searchModal.hide();
-            
-            // Xóa card/alert cũ nếu có
-            const oldInfoCard = document.getElementById('case-info-card');
-            if(oldInfoCard) oldInfoCard.remove();
-            const oldInfoAlert = document.getElementById('case-info-alert');
-            if(oldInfoAlert) oldInfoAlert.remove();
-            
-            // Hiển thị thông báo đã chọn ca bệnh
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'alert alert-info';
-            infoDiv.id = 'case-info-alert';
-            infoDiv.innerHTML = `<h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Đã chọn ca bệnh chỉ điểm</h5><p class="mb-0">Đã chọn BN <strong>${caseData.ho_ten}</strong>. Thông tin đã được điền vào form.</p>`;
-            
-            if (mainFormColumn) {
-                const card1 = mainFormColumn.querySelector('.card');
-                if (card1) {
-                    card1.insertAdjacentElement('afterend', infoDiv);
-                }
-            }
         }
+    });
+
+    // THAY ĐỔI: Logic cho nút "Bỏ chọn"
+    deselectBtn.addEventListener('click', function() {
+        indexCaseWrapper.classList.add('d-none'); // Ẩn card
+        indexCaseBody.innerHTML = ''; // Xóa nội dung
+
+        // Xóa case_id ẩn
+        let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
+        if (oldHiddenInput) oldHiddenInput.remove();
+
+        // Mở khóa mục chọn loại bệnh nếu không phải là trang được tải từ ca bệnh
+        {% if not case %}
+            loaiBenhSelect.disabled = false;
+            if (diaDiemTextarea) diaDiemTextarea.value = '';
+        {% endif %}
     });
 });
 </script>
