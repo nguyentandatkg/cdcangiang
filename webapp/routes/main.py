@@ -1138,13 +1138,14 @@ def profile_page():
 
     return render_template('profile.html', title="Thông tin tài khoản", user=user, form=form)
 
+# Thay thế toàn bộ hàm api_search_cases trong main.py bằng hàm này
+
 @main_bp.route('/api/search_cases')
 def api_search_cases():
     """
     API endpoint để tìm kiếm ca bệnh và trả về kết quả JSON.
-    Chỉ cho phép admin và user cấp khu vực truy cập.
+    Cung cấp thêm thông tin chi tiết như ngày sinh và giới tính.
     """
-    ## <<< SỬA LỖI 3: Cập nhật quyền và logic cho API
     if session.get('role') not in ['admin', 'khuvuc']:
         return jsonify({'error': 'Không có quyền truy cập'}), 403
 
@@ -1156,7 +1157,6 @@ def api_search_cases():
     
     query = db.query(CaBenh).options(joinedload(CaBenh.don_vi))
 
-    # Lọc theo phạm vi của khu vực
     if session.get('role') == 'khuvuc':
         child_xa_ids = get_all_child_xa_ids(user_don_vi)
         query = query.filter(CaBenh.xa_id.in_(child_xa_ids))
@@ -1183,7 +1183,9 @@ def api_search_cases():
             'id': case.id,
             'ho_ten': case.ho_ten,
             'ma_so_benh_nhan': case.ma_so_benh_nhan,
-            'ngay_khoi_phat': case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else '',
+            'ngay_sinh': case.ngay_sinh.strftime('%Y-%m-%d') if case.ngay_sinh else None,
+            'gioi_tinh': case.gioi_tinh or 'Không rõ',
+            'ngay_khoi_phat': case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'Không rõ',
             'chan_doan_chinh': case.chan_doan_chinh,
             'xa_id': case.xa_id,
             'xa_ten': case.don_vi.ten_don_vi if case.don_vi else '',

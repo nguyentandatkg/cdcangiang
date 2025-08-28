@@ -24,26 +24,67 @@
         <!-- CỘT TRÁI: FORM CHÍNH -->
         <div class="col-lg-8" id="main-form-column">
 
-            <!-- ======================================================================= -->
-            <!-- THAY ĐỔI: VÙNG HIỂN THỊ CA BỆNH CHỈ ĐIỂM ĐƯỢC ĐẶT Ở ĐÂY -->
-            <!-- ======================================================================= -->
-            <div id="index-case-display-wrapper" class="card shadow-sm border-info mb-4 {% if not case %}d-none{% endif %}">
-                <div class="card-header bg-info-subtle d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-person-check-fill me-2"></i>Thông tin Ca bệnh Chỉ điểm</h5>
+            <!-- CARD HIỂN THỊ THÔNG TIN CA BỆNH CHỈ ĐIỂM (GIAO DIỆN NÂNG CẤP) -->
+            <div id="index-case-display-wrapper" class="card shadow-sm border-primary mb-4 {% if not case %}d-none{% endif %}">
+                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-person-check-fill me-2"></i>Thông tin Ca bệnh Chỉ điểm</h5>
                     <button type="button" class="btn-close" id="deselect-case-btn" aria-label="Bỏ chọn" title="Bỏ chọn ca bệnh này"></button>
                 </div>
                 <div class="card-body" id="index-case-display-body">
                     {% if case %}
-                        <!-- Hiển thị thông tin nếu trang được tải với một ca bệnh có sẵn -->
-                        <p class="mb-1"><strong>Họ tên:</strong> {{ case.ho_ten }}</p>
-                        <p class="mb-1"><strong>Mã BN:</strong> {{ case.id }}</p>
-                        <p class="mb-1"><strong>Khởi phát:</strong> {{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'N/A' }}</p>
-                        <p class="mb-0"><strong>Địa chỉ:</strong> {{ case.dia_chi_ap }}, {{ case.don_vi.ten_don_vi }}</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-person-vcard fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Họ và tên</small>
+                                        <p class="fw-bold mb-0">{{ case.ho_ten }}</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-calendar-heart fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Ngày sinh (Tuổi)</small>
+                                        <p class="fw-bold mb-0" id="case-dob-age">{{ case.ngay_sinh.strftime('%d/%m/%Y') if case.ngay_sinh else 'Không rõ' }}</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-gender-ambiguous fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Giới tính</small>
+                                        <p class="fw-bold mb-0">{{ case.gioi_tinh or 'Không rõ' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-clipboard2-pulse fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Chẩn đoán</small>
+                                        <p class="fw-bold mb-0">{{ case.chan_doan_chinh }}</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-calendar-event fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Ngày khởi phát</small>
+                                        <p class="fw-bold mb-0">{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'N/A' }}</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-geo-alt fs-5 me-2 text-muted"></i>
+                                    <div>
+                                        <small class="text-muted">Địa chỉ</small>
+                                        <p class="fw-bold mb-0">{{ case.dia_chi_ap }}, {{ case.don_vi.ten_don_vi }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Card 1: Thông tin cơ bản -->
+            <!-- Card 1: Thông tin ổ dịch -->
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">1</span>Thông tin Ổ dịch</h5>
@@ -80,7 +121,7 @@
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Ngày phát hiện (*)</label>
                              <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
                                 <input type="date" class="form-control" name="ngay_phat_hien" value="{{ prefill_data.get('ngay_phat_hien', date.today()).strftime('%Y-%m-%d') }}" required>
                             </div>
                         </div>
@@ -94,12 +135,10 @@
                     <h5 class="mb-0 fw-bold"><span class="badge bg-primary me-2">2</span>Thông tin Chuyên biệt theo Bệnh</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Placeholder khi chưa chọn bệnh -->
                     <div id="placeholder_fields" class="text-center text-muted p-3">
                         <i class="bi bi-info-circle h4"></i>
                         <p>Vui lòng chọn <strong>Loại bệnh</strong> ở trên để hiển thị các trường thông tin phù hợp.</p>
                     </div>
-                    <!-- Fields cho TCM -->
                     <div id="tcm_fields" class="d-none">
                         <h6 class="fw-bold text-secondary">Thông tin cho ổ dịch Tay Chân Miệng</h6>
                         <hr class="mt-1">
@@ -109,7 +148,6 @@
                             <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="noi_phat_hien_tcm" id="radioTruongHoc" value="Trường học"><label class="form-check-label" for="radioTruongHoc">Trường học</label></div>
                         </div>
                     </div>
-                    <!-- Fields cho SXH -->
                     <div id="sxh_fields" class="d-none">
                         <h6 class="fw-bold text-secondary">Thông tin cho ổ dịch Sốt Xuất Huyết</h6>
                         <hr class="mt-1">
@@ -139,50 +177,48 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Ngày xử lý</label>
-                            <input type="date" class="form-control" name="ngay_xu_ly">
+                             <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-plus"></i></span>
+                                <input type="date" class="form-control" name="ngay_xu_ly">
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Địa điểm xử lý / Ghi chú</label>
-                            <textarea class="form-control" name="dia_diem_xu_ly" rows="2">{{ prefill_data.get('dia_diem_xu_ly', '') }}</textarea>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-pencil-square"></i></span>
+                                <textarea class="form-control" name="dia_diem_xu_ly" rows="2">{{ prefill_data.get('dia_diem_xu_ly', '') }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Nút Lưu -->
             <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
-                    <i class="bi bi-check-circle-fill me-2"></i>Lưu Ổ dịch
-                </button>
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm"><i class="bi bi-check-circle-fill me-2"></i>Lưu Ổ dịch</button>
             </div>
         </div>
         
-        <!-- CỘT PHẢI: THÔNG TIN PHỤ -->
+        <!-- CỘT PHẢI: HƯỚNG DẪN -->
         <div class="col-lg-4">
-            <!-- THAY ĐỔI: ĐÃ XÓA CARD THÔNG TIN CA BỆNH Ở ĐÂY -->
             <div class="card shadow-sm border-0 bg-light">
                 <div class="card-body">
                     <h5 class="fw-bold text-secondary"><i class="bi bi-lightbulb-fill me-2"></i>Hướng dẫn</h5>
                     <hr>
+                    <p class="small text-muted mb-3">Chưa có ca bệnh chỉ điểm? Bạn có thể tìm kiếm trong hệ thống.</p>
                     {% if session.get('role') in ['admin', 'khuvuc'] %}
                      <div class="d-grid mb-3">
-                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchCaseModal">
-                            <i class="bi bi-search me-2"></i> Tìm ca bệnh chỉ điểm
-                        </button>
+                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#searchCaseModal"><i class="bi bi-search me-2"></i> Tìm ca bệnh chỉ điểm</button>
                     </div>
                     {% endif %}
                     <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Các trường có dấu (*) là bắt buộc.</p>
                     <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Chọn <strong>Loại bệnh</strong> để hiển thị các thông tin cần khai báo thêm.</p>
-                    <p class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>Nếu tạo từ ca bệnh, ổ dịch sẽ tự động được liên kết với ca bệnh đó.</p>
                 </div>
             </div>
         </div>
     </div>
 </form>
 
-<style>
-    .fw-semibold { font-weight: 600 !important; }
-</style>
+<style> .fw-semibold { font-weight: 600 !important; } </style>
 
 <!-- Search Case Modal -->
 <div class="modal fade" id="searchCaseModal" tabindex="-1" aria-labelledby="searchCaseModalLabel" aria-hidden="true">
@@ -227,11 +263,16 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // === PART 1: LOGIC ẨN/HIỆN TRƯỜNG THEO LOẠI BỆNH ===
+    // === CÁC BIẾN VÀ HÀM TIỆN ÍCH ===
     const loaiBenhSelect = document.getElementById('loai_benh_select');
     const tcmFields = document.getElementById('tcm_fields');
     const sxhFields = document.getElementById('sxh_fields');
     const placeholder = document.getElementById('placeholder_fields');
+    const searchModalEl = document.getElementById('searchCaseModal');
+    const mainForm = document.getElementById('new-odich-form');
+    const indexCaseWrapper = document.getElementById('index-case-display-wrapper');
+    const indexCaseBody = document.getElementById('index-case-display-body');
+    const deselectBtn = document.getElementById('deselect-case-btn');
 
     function toggleDiseaseFields() {
         const selectedValue = loaiBenhSelect.value;
@@ -244,27 +285,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     loaiBenhSelect.addEventListener('change', toggleDiseaseFields);
     toggleDiseaseFields();
-
-    // === PART 2: LOGIC TÌM KIẾM CA BỆNH TRONG MODAL ===
-    const searchModalEl = document.getElementById('searchCaseModal');
-    if (!searchModalEl) return;
     
+    // Hàm tính tuổi
+    function calculateAge(dobString) {
+        if (!dobString) return '';
+        const dob = new Date(dobString);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        return age >= 0 ? `(${age} tuổi)` : '(sơ sinh)';
+    }
+    
+    // Cập nhật tuổi ban đầu nếu có
+    const initialDobEl = document.getElementById('case-dob-age');
+    if (initialDobEl && initialDobEl.textContent.includes('/')) {
+        try {
+            const dobParts = initialDobEl.textContent.trim().split('/');
+            const dobStr = `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}`;
+            initialDobEl.textContent += ` ${calculateAge(dobStr)}`;
+        } catch (e) {
+            console.warn("Could not calculate age for initial case.", e);
+        }
+    }
+
+    // === LOGIC TÌM KIẾM VÀ HIỂN THỊ ===
+    if (!searchModalEl || !mainForm || !indexCaseWrapper) return;
     const searchModal = new bootstrap.Modal(searchModalEl);
     const caseSearchInput = document.getElementById('caseSearchInput');
     const caseSearchBtn = document.getElementById('caseSearchBtn');
     const caseSearchResultsTbody = document.getElementById('caseSearchResults');
-    const mainForm = document.getElementById('new-odich-form');
-
-    // THAY ĐỔI: Lấy tham chiếu đến các phần tử của card hiển thị thông tin
-    const indexCaseWrapper = document.getElementById('index-case-display-wrapper');
-    const indexCaseBody = document.getElementById('index-case-display-body');
-    const deselectBtn = document.getElementById('deselect-case-btn');
-    
-    if (!mainForm || !indexCaseWrapper || !indexCaseBody || !deselectBtn) {
-        console.error("Lỗi: Một trong các thành phần giao diện chính bị thiếu.");
-        return;
-    }
-
     const xaIdHiddenInput = document.getElementById('xa_id_hidden_input');
     const xaTextInput = document.getElementById('xa_ten_text_input'); 
     const xaSelectAdmin = document.getElementById('xa_id_select_admin');
@@ -305,33 +357,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     caseSearchBtn.addEventListener('click', performSearch);
-    caseSearchInput.addEventListener('keypress', e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            performSearch();
-        }
-    });
+    caseSearchInput.addEventListener('keypress', e => e.key === 'Enter' && (e.preventDefault(), performSearch()));
 
-    // THAY ĐỔI: Hàm cập nhật giao diện khi chọn một ca bệnh
     function selectIndexCase(caseData) {
-        // Cập nhật thông tin trong card
-        indexCaseBody.innerHTML = `
-            <p class="mb-1"><strong>Họ tên:</strong> ${caseData.ho_ten}</p>
-            <p class="mb-1"><strong>Mã BN:</strong> ${caseData.id}</p>
-            <p class="mb-1"><strong>Khởi phát:</strong> ${caseData.ngay_khoi_phat}</p>
-            <p class="mb-0"><strong>Địa chỉ:</strong> ${caseData.dia_chi_ap}, ${caseData.xa_ten}</p>`;
-        indexCaseWrapper.classList.remove('d-none'); // Hiển thị card
+        const ageText = calculateAge(caseData.ngay_sinh);
+        const dobFormatted = caseData.ngay_sinh ? new Date(caseData.ngay_sinh).toLocaleDateString('vi-VN') : 'Không rõ';
 
-        // Điền thông tin vào form
+        indexCaseBody.innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2"><i class="bi bi-person-vcard fs-5 me-2 text-muted"></i><div><small class="text-muted">Họ và tên</small><p class="fw-bold mb-0">${caseData.ho_ten}</p></div></div>
+                    <div class="d-flex align-items-center mb-2"><i class="bi bi-calendar-heart fs-5 me-2 text-muted"></i><div><small class="text-muted">Ngày sinh (Tuổi)</small><p class="fw-bold mb-0">${dobFormatted} ${ageText}</p></div></div>
+                    <div class="d-flex align-items-center"><i class="bi bi-gender-ambiguous fs-5 me-2 text-muted"></i><div><small class="text-muted">Giới tính</small><p class="fw-bold mb-0">${caseData.gioi_tinh}</p></div></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2"><i class="bi bi-clipboard2-pulse fs-5 me-2 text-muted"></i><div><small class="text-muted">Chẩn đoán</small><p class="fw-bold mb-0">${caseData.chan_doan_chinh}</p></div></div>
+                    <div class="d-flex align-items-center mb-2"><i class="bi bi-calendar-event fs-5 me-2 text-muted"></i><div><small class="text-muted">Ngày khởi phát</small><p class="fw-bold mb-0">${caseData.ngay_khoi_phat}</p></div></div>
+                    <div class="d-flex align-items-center"><i class="bi bi-geo-alt fs-5 me-2 text-muted"></i><div><small class="text-muted">Địa chỉ</small><p class="fw-bold mb-0">${caseData.dia_chi_ap}, ${caseData.xa_ten}</p></div></div>
+                </div>
+            </div>`;
+        indexCaseWrapper.classList.remove('d-none');
         if (xaIdHiddenInput) xaIdHiddenInput.value = caseData.xa_id;
         if (xaTextInput) xaTextInput.value = caseData.xa_ten;
         if (xaSelectAdmin) xaSelectAdmin.value = caseData.xa_id;
         if (diaDiemTextarea) {
-            let diaDiemGoiY = `Ổ dịch tại ${caseData.dia_chi_chi_tiet || ''}, ${caseData.dia_chi_ap || ''} (BN ${caseData.ho_ten})`;
-            diaDiemTextarea.value = diaDiemGoiY.replace(/ ,/g, ',');
+            diaDiemTextarea.value = `Ổ dịch tại ${caseData.dia_chi_chi_tiet || ''}, ${caseData.dia_chi_ap || ''} (BN ${caseData.ho_ten})`.replace(/ ,/g, ',');
         }
-
-        // Thêm/cập nhật case_id ẩn
         let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
         if (oldHiddenInput) oldHiddenInput.remove();
         const hiddenInput = document.createElement('input');
@@ -339,8 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hiddenInput.name = 'case_id_from_url';
         hiddenInput.value = caseData.id;
         mainForm.appendChild(hiddenInput);
-
-        // Khóa mục chọn loại bệnh
         loaiBenhSelect.disabled = true;
     }
 
@@ -352,19 +401,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // THAY ĐỔI: Logic cho nút "Bỏ chọn"
     deselectBtn.addEventListener('click', function() {
-        indexCaseWrapper.classList.add('d-none'); // Ẩn card
-        indexCaseBody.innerHTML = ''; // Xóa nội dung
-
-        // Xóa case_id ẩn
+        indexCaseWrapper.classList.add('d-none');
+        indexCaseBody.innerHTML = '';
         let oldHiddenInput = mainForm.querySelector('input[name="case_id_from_url"]');
         if (oldHiddenInput) oldHiddenInput.remove();
-
-        // Mở khóa mục chọn loại bệnh nếu không phải là trang được tải từ ca bệnh
         {% if not case %}
             loaiBenhSelect.disabled = false;
             if (diaDiemTextarea) diaDiemTextarea.value = '';
+            if (xaTextInput) xaTextInput.value = "{{ session.get('don_vi_ten', '') }}";
+            if (xaIdHiddenInput) xaIdHiddenInput.value = "{{ session.get('don_vi_id', '') }}";
+            if (xaSelectAdmin) xaSelectAdmin.value = "";
         {% endif %}
     });
 });
