@@ -1,126 +1,163 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
-    <div>
-        <h1 class="h2"><i class="bi bi-person-lines-fill me-2"></i>Chi tiết Ca bệnh</h1>
-        <p class="text-muted mb-0">Hồ sơ của bệnh nhân: <strong class="text-dark">{{ case.ho_ten }}</strong></p>
-    </div>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- THAY ĐỔI QUAN TRỌNG: Thêm query string vào link "Quay lại" -->
-        <a href="{{ url_for('main.cases_page') }}?{{ current_query_string }}" class="btn btn-outline-secondary d-flex align-items-center">
-            <i class="bi bi-arrow-left me-2"></i> Quay lại Danh sách
-        </a>
+
+<!-- =================================================================== -->
+<!-- PHẦN HEADER NỔI BẬT VÀ CÁC NÚT HÀNH ĐỘNG CHÍNH -->
+<!-- =================================================================== -->
+<div class="pt-3 pb-2 mb-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+        <div>
+            <!-- Tên bệnh nhân được làm nổi bật -->
+            <h1 class="h2 fw-bold mb-1">{{ case.ho_ten }}</h1>
+            <p class="text-muted mb-0">
+                Mã BN: {{ case.id }} <span class="mx-2">|</span> Chẩn đoán: <strong class="text-dark">{{ case.chan_doan_chinh }}</strong>
+            </p>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <!-- Nút quay lại luôn hiển thị -->
+            <a href="{{ url_for('main.cases_page') }}?{{ current_query_string }}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left me-2"></i> Quay lại
+            </a>
+            <!-- Các nút hành động có phân quyền -->
+            {% if session.get('role') in ['admin', 'khuvuc'] %}
+            <a href="{{ url_for('main.edit_case_page', case_id=case.id) }}?{{ current_query_string }}" class="btn btn-warning me-2">
+                <i class="bi bi-pencil-square me-2"></i> Sửa
+            </a>
+            <form action="{{ url_for('main.delete_case_action', case_id=case.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ca bệnh của {{ case.ho_ten }} không? Hành động này không thể hoàn tác.');">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-2"></i> Xóa
+                </button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 
 <div class="row g-4">
-    <!-- CỘT THÔNG TIN CHÍNH (BỆNH NHÂN & BỆNH ÁN) -->
+    <!-- =================================================================== -->
+    <!-- CỘT TRÁI - THÔNG TIN CHI TIẾT -->
+    <!-- =================================================================== -->
     <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3">
-                <h5 class="mb-0"><i class="bi bi-person-vcard me-2"></i>Thông tin Bệnh nhân <span class="badge bg-secondary fw-normal ms-2">ID: {{ case.id }}</span></h5>
-            </div>
+        <!-- Card Thông tin tổng quan quan trọng nhất -->
+        <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-person-badge me-2 text-primary" style="width: 20px;"></i>Mã số</span>
-                        <strong class="text-end">{{ case.ma_so_benh_nhan }}</strong>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-person-fill me-2 text-primary" style="width: 20px;"></i>Họ và tên</span>
-                        <strong class="text-end">{{ case.ho_ten }}</strong>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-calendar-event me-2 text-primary" style="width: 20px;"></i>Ngày sinh</span>
-                        <span class="text-end">{{ case.ngay_sinh.strftime('%d/%m/%Y') if case.ngay_sinh else 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-gender-ambiguous me-2 text-primary" style="width: 20px;"></i>Giới tính</span>
-                        <span class="text-end">{{ case.gioi_tinh or 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-geo-alt-fill me-2 text-primary" style="width: 20px;"></i>Xã/Phường</span>
-                        <span class="text-end">{{ case.don_vi.ten_don_vi if case.don_vi else 'Không rõ' }}</span>
-                    </li>
-                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-pin-map-fill me-2 text-primary" style="width: 20px;"></i>Ấp/Khu phố</span>
-                        <span class="text-end">{{ case.dia_chi_ap or 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-house-door-fill me-2 text-primary" style="width: 20px;"></i>Địa chỉ chi tiết</span>
-                        <span class="text-end">{{ case.dia_chi_chi_tiet or 'Không rõ' }}</span>
-                    </li>
-                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-cloud-arrow-down-fill me-2 text-primary" style="width: 20px;"></i>Ngày import</span>
-                        <span class="text-end">{{ case.ngay_import.strftime('%d/%m/%Y') if case.ngay_import else 'Không rõ' }}</span>
-                    </li>
-                </ul>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-1">Tình trạng hiện nay</h6>
+                        {% set status_class = {
+                            'Tử vong': 'bg-danger',
+                            'Ra viện': 'bg-success',
+                            'Điều trị nội trú': 'bg-warning text-dark',
+                            'Chuyển viện': 'bg-info text-dark',
+                            'Điều trị ngoại trú': 'bg-primary'
+                        }.get(case.tinh_trang_hien_nay, 'bg-secondary') %}
+                        <span class="badge fs-6 {{ status_class }}">{{ case.tinh_trang_hien_nay or 'Chưa rõ' }}</span>
+                    </div>
+                    <div class="col-md-4 border-start border-end">
+                        <h6 class="text-muted mb-1">Ngày khởi phát</h6>
+                        <p class="h5 mb-0 fw-normal">{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'Chưa rõ' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-1">Ngày báo cáo</h6>
+                        <p class="h5 mb-0 fw-normal">{{ case.ngay_bao_cao.strftime('%d/%m/%Y') if case.ngay_bao_cao else 'Chưa rõ' }}</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="card shadow-sm mt-4">
+        <!-- Card Thông tin chi tiết -->
+        <div class="card shadow-sm">
             <div class="card-header bg-light py-3">
-                <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Thông tin Bệnh án</h5>
+                <h5 class="mb-0"><i class="bi bi-file-person me-2"></i>Hồ sơ chi tiết</h5>
             </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-calendar-x me-2 text-danger" style="width: 20px;"></i>Ngày khởi phát</span>
-                        <span class="text-end">{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-hospital me-2 text-warning" style="width: 20px;"></i>Ngày nhập viện</span>
-                        <span class="text-end">{{ case.ngay_nhap_vien.strftime('%d/%m/%Y') if case.ngay_nhap_vien else 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-calendar-check me-2 text-success" style="width: 20px;"></i>Ngày ra viện</span>
-                        <span class="text-end">{{ case.ngay_ra_vien.strftime('%d/%m/%Y') if case.ngay_ra_vien else 'Chưa có' }}</span>
-                    </li>
-                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-file-earmark-medical me-2 text-info" style="width: 20px;"></i>Chẩn đoán chính</span>
-                        <span class="text-end">{{ case.chan_doan_chinh or 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-bar-chart-steps me-2 text-info" style="width: 20px;"></i>Phân độ bệnh</span>
-                        <span class="text-end">{{ case.phan_do_benh or 'Không rõ' }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-heart-pulse me-2 text-info" style="width: 20px;"></i>Tình trạng hiện nay</span>
-                        <span class="text-end">{{ case.tinh_trang_hien_nay or 'Không rõ' }}</span>
-                    </li>
-                </ul>
+            <div class="card-body p-4">
+
+                <!-- Phần thông tin cá nhân -->
+                <h6 class="text-primary fw-bold"><i class="bi bi-person-vcard me-2"></i>Thông tin cá nhân</h6>
+                <hr class="mt-2 mb-3">
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Mã số BN</div>
+                    <div class="col-sm-9 fw-bold">{{ case.ma_so_benh_nhan }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Ngày sinh</div>
+                    <div class="col-sm-9">{{ case.ngay_sinh.strftime('%d/%m/%Y') if case.ngay_sinh else 'Không rõ' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Giới tính</div>
+                    <div class="col-sm-9">{{ case.gioi_tinh or 'Không rõ' }}</div>
+                </div>
+
+                <!-- Phần địa chỉ -->
+                <h6 class="text-primary fw-bold mt-4"><i class="bi bi-geo-alt me-2"></i>Thông tin địa chỉ</h6>
+                <hr class="mt-2 mb-3">
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Xã/Phường</div>
+                    <div class="col-sm-9">{{ case.don_vi.ten_don_vi if case.don_vi else 'Không rõ' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Ấp/Khu phố</div>
+                    <div class="col-sm-9">{{ case.dia_chi_ap or 'Không rõ' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Địa chỉ chi tiết</div>
+                    <div class="col-sm-9">{{ case.dia_chi_chi_tiet or 'Không rõ' }}</div>
+                </div>
+
+                <!-- Phần bệnh án -->
+                <h6 class="text-primary fw-bold mt-4"><i class="bi bi-clipboard2-pulse me-2"></i>Thông tin bệnh án</h6>
+                <hr class="mt-2 mb-3">
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Phân độ bệnh</div>
+                    <div class="col-sm-9">{{ case.phan_do_benh or 'Không rõ' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Ngày nhập viện</div>
+                    <div class="col-sm-9">{{ case.ngay_nhap_vien.strftime('%d/%m/%Y') if case.ngay_nhap_vien else 'Không rõ' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Ngày ra viện</div>
+                    <div class="col-sm-9">{{ case.ngay_ra_vien.strftime('%d/%m/%Y') if case.ngay_ra_vien else 'Chưa có' }}</div>
+                </div>
+                 <div class="row mb-3">
+                    <div class="col-sm-3 text-muted">Ngày import</div>
+                    <div class="col-sm-9">{{ case.ngay_import.strftime('%d/%m/%Y') if case.ngay_import else 'Không rõ' }}</div>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <!-- CỘT THÔNG TIN DỊCH TỄ & HÀNH ĐỘNG -->
+    <!-- =================================================================== -->
+    <!-- CỘT PHẢI - THÔNG TIN DỊCH TỄ -->
+    <!-- =================================================================== -->
     <div class="col-lg-4">
         <div class="card shadow-sm">
             <div class="card-header bg-light py-3">
-                <h5 class="mb-0"><i class="bi bi-shield-virus me-2"></i>Thông tin Dịch tễ</h5>
+                <h5 class="mb-0"><i class="bi bi-shield-exclamation me-2"></i>Thông tin Dịch tễ</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 {% if case.o_dich %}
                     <div class="p-3 rounded bg-light border-start border-primary border-4">
-                        <p class="mb-1">Ca bệnh thuộc về ổ dịch:</p>
+                        <p class="mb-1 text-muted">Ca bệnh thuộc về ổ dịch:</p>
                         <h5 class="mb-2 text-primary">
-                            {{ case.o_dich.loai_benh }}
+                            {{ case.o_dich.loai_benh }} tại {{ case.o_dich.don_vi.ten_don_vi }}
                         </h5>
-                        <p class="mb-2 text-muted small">
-                            <i class="bi bi-calendar-event me-1"></i> Phát hiện ngày: {{ case.o_dich.ngay_phat_hien.strftime('%d/%m/%Y') }}
+                        <p class="mb-2 small">
+                            <i class="bi bi-calendar-event me-1"></i> Phát hiện: <strong>{{ case.o_dich.ngay_phat_hien.strftime('%d/%m/%Y') }}</strong>
                         </p>
-                        <a href="{{ url_for('main.view_odich_page', odich_id=case.o_dich.id) }}" class="btn btn-outline-primary w-100 mt-2">
+                        <a href="{{ url_for('main.view_odich_page', odich_id=case.o_dich.id) }}" class="btn btn-primary w-100 mt-2">
                             <i class="bi bi-box-arrow-up-right me-2"></i>Xem chi tiết ổ dịch
                         </a>
                     </div>
                 {% else %}
                     <div class="text-center p-4 bg-light rounded">
-                        <i class="bi bi-info-circle-fill h2 text-muted"></i>
+                        <i class="bi bi-info-circle h2 text-muted"></i>
                         <p class="mt-2 mb-3">Ca bệnh này chưa được liên kết với ổ dịch nào.</p>
                         
                         {# Nút chỉ hiện khi ca bệnh chưa có ổ dịch VÀ user có quyền #}
-                        {% if not case.o_dich and (session.get('role') == 'admin' or session.get('role') == 'xa') %}
+                        {% if not case.o_dich and session.get('role') in ['admin', 'khuvuc'] %}
                         <a href="{{ url_for('main.new_odich_page', from_case_id=case.id) }}" class="btn btn-success">
                             <i class="bi bi-plus-circle me-2"></i> Tạo ổ dịch từ ca bệnh này
                         </a>

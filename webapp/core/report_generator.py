@@ -1291,6 +1291,62 @@ def generate_custom_btn_report(
         period_label="Mắc", note_text="Ghi chú: Mắc: Tổng số ca mắc trong kỳ; BS: Bổ sung ca mắc; CD: Số ca mắc cộng dồn từ đầu năm",
         comments=comments, analysis_data=None
     )
+
+
+# ==============================================================================
+# 8. HÀM XUẤT DANH SÁCH CA BỆNH RA EXCEL (MỚI)
+# ==============================================================================
+from io import BytesIO
+
+def generate_cases_export(cases: list[CaBenh]) -> BytesIO:
+    """
+    Tạo một file Excel trong bộ nhớ từ danh sách các đối tượng CaBenh.
+    
+    :param cases: Danh sách các đối tượng CaBenh đã được truy vấn từ DB.
+    :return: Một đối tượng BytesIO chứa dữ liệu của file Excel.
+    """
+    # 1. Chuẩn bị dữ liệu để đưa vào DataFrame
+    data_to_export = []
+    for case in cases:
+        data_to_export.append({
+            'ID': case.id,
+            'Mã BN': case.ma_so_benh_nhan,
+            'Họ và tên': case.ho_ten,
+            'Ngày sinh': case.ngay_sinh.strftime('%d/%m/%Y') if case.ngay_sinh else '',
+            'Giới tính': case.gioi_tinh,
+            'Xã/Phường': case.don_vi.ten_don_vi if case.don_vi else '',
+            'Ấp/Khu phố': case.dia_chi_ap,
+            'Địa chỉ chi tiết': case.dia_chi_chi_tiet,
+            'Ngày khởi phát': case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else '',
+            'Chẩn đoán chính': case.chan_doan_chinh,
+            'Phân độ bệnh': case.phan_do_benh,
+            'Tình trạng hiện nay': case.tinh_trang_hien_nay,
+            'ID Ổ dịch': case.o_dich_id if case.o_dich_id else ''
+        })
+
+    df = pd.DataFrame(data_to_export)
+
+    # 2. Tạo file Excel trong bộ nhớ
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='DanhSachCaBenh', index=False)
+
+        # 3. Tự động điều chỉnh độ rộng cột cho đẹp
+        worksheet = writer.sheets['DanhSachCaBenh']
+        for idx, col in enumerate(df.columns):
+            series = df[col]
+            # Tính độ rộng tối đa của header và của dữ liệu trong cột
+            max_len = max(
+                (series.astype(str).map(len).max(), len(str(series.name)))
+            ) + 2  # Thêm 2 ký tự để có khoảng trống
+            worksheet.set_column(idx, idx, max_len)
+
+    # 4. Quay con trỏ về đầu file để Flask có thể đọc
+    output.seek(0)
+    
+    return output
+
+
 # ==============================================================================
 # 6. HÀM TỔNG HỢP XUẤT TẤT CẢ BÁO CÁO
 # ==============================================================================

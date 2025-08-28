@@ -8,8 +8,10 @@
         <p class="text-muted mb-0">Đơn vị: {{ session.get('don_vi_ten', 'Toàn tỉnh') }}</p>
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- <<< SỬA ĐIỂM 1: Mở quyền cho 'khuvuc' -->
         {% if session.get('role') in ['admin', 'khuvuc'] %}
+        <a href="{{ url_for('main.export_cases') }}?{{ current_query_string }}" class="btn btn-outline-success me-2">
+            <i class="bi bi-file-earmark-excel me-2"></i> Xuất Excel
+        </a>
         <a href="{{ url_for('main.new_case_page') }}?{{ current_query_string }}" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-circle me-2"></i> Thêm Ca bệnh mới
         </a>
@@ -17,161 +19,170 @@
     </div>
 </div>
 
-<!-- BỘ LỌC NÂNG CAO (DẠNG ACCORDION) -->
-<div class="accordion mb-4" id="filterAccordion">
-    <div class="accordion-item shadow-sm">
-        <h2 class="accordion-header" id="headingOne">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilter" aria-expanded="false" aria-controls="collapseFilter">
-                <i class="bi bi-search me-2"></i><strong>Tìm kiếm & Lọc nâng cao</strong>
+<!-- BẢNG DỮ LIỆU VÀ BỘ LỌC TÍCH HỢP -->
+<div class="card shadow-sm border-0">
+    <!-- Header của Card: Chứa thanh tìm kiếm nhanh và nút bật/tắt bộ lọc nâng cao -->
+    <div class="card-header bg-light p-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- Form tìm kiếm nhanh theo tên -->
+            <form method="GET" action="{{ url_for('main.cases_page') }}" class="flex-grow-1 me-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="ho_ten" value="{{ filters.ho_ten or '' }}" placeholder="Tìm kiếm theo tên hoặc mã bệnh nhân...">
+                </div>
+            </form>
+            <!-- Nút bật/tắt bộ lọc nâng cao -->
+            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilter" aria-expanded="false" aria-controls="collapseFilter">
+                <i class="bi bi-funnel me-2"></i> Lọc nâng cao
             </button>
-        </h2>
-        <div id="collapseFilter" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#filterAccordion">
-            <div class="accordion-body bg-light">
-                <form method="GET" action="{{ url_for('main.cases_page') }}" id="filter-form">
-                    <div class="row g-3">
-                        <!-- Lọc theo thời gian -->
-                        <div class="col-md-3">
-                            <label class="form-label">Từ ngày khởi phát</label>
-                            <input type="date" class="form-control" name="start_date" value="{{ filters.start_date or '' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Đến ngày khởi phát</label>
-                            <input type="date" class="form-control" name="end_date" value="{{ filters.end_date or '' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Từ ngày báo cáo</label>
-                            <input type="date" class="form-control" name="report_start_date" value="{{ filters.report_start_date or '' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Đến ngày báo cáo</label>
-                            <input type="date" class="form-control" name="report_end_date" value="{{ filters.report_end_date or '' }}">
-                        </div>
-
-                        <!-- Lọc theo thông tin -->
-                        <div class="col-md-6">
-                            <label class="form-label">Tên Bệnh nhân</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control" name="ho_ten" value="{{ filters.ho_ten or '' }}" placeholder="Nhập tên để tìm kiếm...">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Chẩn đoán</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-clipboard2-pulse"></i></span>
-                                <select class="form-select" name="chan_doan">
-                                    <option value="">-- Tất cả chẩn đoán --</option>
-                                    {% for chan_doan_item in filter_data.chan_doan_list %}
-                                    <option value="{{ chan_doan_item }}" {% if filters.chan_doan == chan_doan_item %}selected{% endif %}>
-                                        {{ chan_doan_item }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Lọc theo địa chỉ (động) -->
-                        {% set user_role = session.get('role') %}
-                        {% set user_cap = session.get('don_vi_cap') %}
-
-                        {% if user_role == 'admin' or user_cap == 'Tỉnh' %}
-                        <div class="col-md-4">
-                            <label class="form-label">Khu vực</label>
-                            <select class="form-select" name="khu_vuc_id" id="khu_vuc_select">
-                                <option value="">-- Tất cả khu vực --</option>
-                                {% for kv in filter_data.khu_vuc_list %}
-                                <option value="{{ kv.id }}" {% if filters.khu_vuc_id == kv.id|string %}selected{% endif %}>{{ kv.ten_don_vi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        {% if user_role == 'admin' or user_cap in ['Tỉnh', 'Khu vực'] %}
-                        <div class="col-md-4">
-                            <label class="form-label">Xã/Phường</label>
-                            <select class="form-select" name="xa_id" id="xa_select">
-                                <option value="">-- Tất cả Xã/Phường --</option>
-                                {% for xa in filter_data.xa_list %}
-                                <option value="{{ xa.id }}" data-parent-id="{{ xa.parent_id }}" {% if filters.xa_id == xa.id|string %}selected{% endif %}>{{ xa.ten_don_vi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        {% if user_cap == 'Xã' %}
-                        <div class="col-md-4">
-                            <label class="form-label">Ấp/Khu phố</label>
-                            <select class="form-select" name="dia_chi_ap" id="ap_select">
-                                <option value="">-- Tất cả ấp --</option>
-                                {% for ap in filter_data.ap_list %}
-                                <option value="{{ ap.ten_don_vi }}" {% if filters.dia_chi_ap == ap.ten_don_vi %}selected{% endif %}>{{ ap.ten_don_vi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-end">
-                        <a href="{{ url_for('main.cases_page') }}" class="btn btn-secondary me-2"><i class="bi bi-x-lg me-2"></i>Xóa bộ lọc</a>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-filter me-2"></i>Áp dụng</button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
-</div>
+    
+    <!-- Phần bộ lọc nâng cao (có thể thu gọn) -->
+    <div class="collapse" id="collapseFilter">
+        <div class="bg-light border-top p-3">
+            <form method="GET" action="{{ url_for('main.cases_page') }}" id="filter-form">
+                <!-- Giữ lại input tìm kiếm tên để không bị mất khi submit form này -->
+                <input type="hidden" name="ho_ten" value="{{ filters.ho_ten or '' }}">
+                <div class="row g-3">
+                    <!-- Lọc theo thời gian -->
+                    <div class="col-md-3">
+                        <label class="form-label small">Từ ngày khởi phát</label>
+                        <input type="date" class="form-control form-control-sm" name="start_date" value="{{ filters.start_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Đến ngày khởi phát</label>
+                        <input type="date" class="form-control form-control-sm" name="end_date" value="{{ filters.end_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Từ ngày báo cáo</label>
+                        <input type="date" class="form-control form-control-sm" name="report_start_date" value="{{ filters.report_start_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Đến ngày báo cáo</label>
+                        <input type="date" class="form-control form-control-sm" name="report_end_date" value="{{ filters.report_end_date or '' }}">
+                    </div>
 
-<!-- BẢNG DỮ LIỆU -->
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-light">
-        <i class="bi bi-table me-2"></i>
-        {% if pagination and pagination.total_items > 0 %}
-        Hiển thị <strong>{{ cases|length }}</strong> trong tổng số <strong>{{ pagination.total_items }}</strong> ca bệnh
-        {% else %}
-        Danh sách ca bệnh
-        {% endif %}
+                    <!-- Lọc theo thông tin khác -->
+                     <div class="col-md-4">
+                        <label class="form-label small">Chẩn đoán</label>
+                        <select class="form-select form-select-sm" name="chan_doan">
+                            <option value="">-- Tất cả chẩn đoán --</option>
+                            {% for chan_doan_item in filter_data.chan_doan_list %}
+                            <option value="{{ chan_doan_item }}" {% if filters.chan_doan == chan_doan_item %}selected{% endif %}>
+                                {{ chan_doan_item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Lọc theo địa chỉ (động) -->
+                    {% set user_role = session.get('role') %}
+                    {% set user_cap = session.get('don_vi_cap') %}
+
+                    {% if user_role == 'admin' or user_cap == 'Tỉnh' %}
+                    <div class="col-md-4">
+                        <label class="form-label small">Khu vực</label>
+                        <select class="form-select form-select-sm" name="khu_vuc_id" id="khu_vuc_select">
+                            <option value="">-- Tất cả khu vực --</option>
+                            {% for kv in filter_data.khu_vuc_list %}
+                            <option value="{{ kv.id }}" {% if filters.khu_vuc_id == kv.id|string %}selected{% endif %}>{{ kv.ten_don_vi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    {% if user_role == 'admin' or user_cap in ['Tỉnh', 'Khu vực'] %}
+                    <div class="col-md-4">
+                        <label class="form-label small">Xã/Phường</label>
+                        <select class="form-select form-select-sm" name="xa_id" id="xa_select">
+                            <option value="">-- Tất cả Xã/Phường --</option>
+                            {% for xa in filter_data.xa_list %}
+                            <option value="{{ xa.id }}" data-parent-id="{{ xa.parent_id }}" {% if filters.xa_id == xa.id|string %}selected{% endif %}>{{ xa.ten_don_vi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="d-flex justify-content-end">
+                    <a href="{{ url_for('main.cases_page') }}" class="btn btn-secondary btn-sm me-2"><i class="bi bi-x-lg me-1"></i>Xóa bộ lọc</a>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-filter me-1"></i>Áp dụng</button>
+                </div>
+            </form>
+        </div>
     </div>
+    
+    <!-- Body của Card: Chứa bảng dữ liệu -->
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0" style="vertical-align: middle;">
+            <table class="table table-hover mb-0" style="vertical-align: middle;">
                 <thead class="table-light">
                     <tr>
-                        <th scope="col">Mã BN</th>
-                        <th scope="col">Họ và Tên</th>
-                        {% if session.get('role') in ['admin', 'tinh', 'khuvuc'] %}<th scope="col">Xã</th>{% endif %}
-                        <th scope="col">Ấp</th>
-                        <th scope="col">Ngày Khởi Phát</th>
+                        <th scope="col" class="ps-3">Bệnh nhân</th>
                         <th scope="col">Chẩn đoán</th>
-                        <th scope="col" class="text-center">Hành động</th>
+                        {% if session.get('role') in ['admin', 'tinh', 'khuvuc'] %}<th scope="col">Địa chỉ</th>{% endif %}
+                        <th scope="col">Ngày Khởi Phát</th>
+                        <th scope="col" class="text-end pe-3">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for case in cases %}
                     <tr>
-                        <td>{{ case.id }}</td>
-                        <td><a href="{{ url_for('main.view_case_page', case_id=case.id) }}?{{ current_query_string }}">{{ case.ho_ten }}</a></td>
-                        {% if session.get('role') in ['admin', 'tinh', 'khuvuc'] %}<td>{{ case.don_vi.ten_don_vi if case.don_vi else '' }}</td>{% endif %}
-                        <td>{{ case.dia_chi_ap or '' }}</td>
+                        <td class="ps-3">
+                            <a href="{{ url_for('main.view_case_page', case_id=case.id) }}?{{ current_query_string }}" class="fw-bold text-dark text-decoration-none">
+                                {{ case.ho_ten }}
+                            </a>
+                            <small class="d-block text-muted">ID: {{ case.id }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-soft">{{ case.chan_doan_chinh }}</span>
+                        </td>
+                        {% if session.get('role') in ['admin', 'tinh', 'khuvuc'] %}
+                        <td>
+                            {{ case.don_vi.ten_don_vi if case.don_vi else '' }}
+                            {% if case.dia_chi_ap %}<small class="d-block text-muted">{{ case.dia_chi_ap }}</small>{% endif %}
+                        </td>
+                        {% endif %}
                         <td>{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else '' }}</td>
-                        <td>{{ case.chan_doan_chinh }}</td>
-                        <td class="text-center" style="white-space: nowrap;">
-                            <a href="{{ url_for('main.view_case_page', case_id=case.id) }}?{{ current_query_string }}" class="btn btn-sm btn-outline-primary" title="Xem Chi tiết"><i class="bi bi-eye"></i></a>
-                            
-                            <!-- <<< SỬA ĐIỂM 2: Mở quyền cho 'khuvuc' -->
-                            {% if session.get('role') in ['admin', 'khuvuc'] %}
-                            <a href="{{ url_for('main.edit_case_page', case_id=case.id) }}?{{ current_query_string }}" class="btn btn-sm btn-outline-warning" title="Sửa"><i class="bi bi-pencil-square"></i></a>
-                            {% if not case.o_dich_id %}
-                            <a href="{{ url_for('main.new_odich_page', from_case_id=case.id) }}" class="btn btn-sm btn-outline-success" title="Tạo ổ dịch"><i class="bi bi-shield-plus"></i></a>
-                            {% endif %}
-                            <form action="{{ url_for('main.delete_case_action', case_id=case.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ca bệnh này không?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></button>
-                            </form>
-                            {% endif %}
+                        <td class="text-end pe-3" style="white-space: nowrap;">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.view_case_page', case_id=case.id) }}?{{ current_query_string }}" class="btn btn-outline-secondary" title="Xem Chi tiết"><i class="bi bi-eye"></i></a>
+                                {% if session.get('role') in ['admin', 'khuvuc'] %}
+                                    <a href="{{ url_for('main.edit_case_page', case_id=case.id) }}?{{ current_query_string }}" class="btn btn-outline-secondary" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                                    {% if not case.o_dich_id %}
+                                    <a href="{{ url_for('main.new_odich_page', from_case_id=case.id) }}" class="btn btn-outline-secondary" title="Tạo ổ dịch"><i class="bi bi-shield-plus"></i></a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ case.id }}" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
+                    <!-- Modal Xóa cho mỗi ca bệnh -->
+                    <div class="modal fade" id="deleteModal-{{ case.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ case.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel-{{ case.id }}">Xác nhận Xóa ca bệnh</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Bạn có chắc chắn muốn xóa ca bệnh của <strong>{{ case.ho_ten }}</strong>? Hành động này không thể hoàn tác.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="{{ url_for('main.delete_case_action', case_id=case.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% else %}
                     <tr>
-                        <td colspan="7">
+                        <td colspan="5">
                             <div class="text-center text-muted p-5">
                                 <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                 <h5 class="mt-2">Không có ca bệnh nào phù hợp</h5>
@@ -184,16 +195,31 @@
             </table>
         </div>
     </div>
-    {% if pagination and pagination.total_pages > 1 %}
-    <div class="card-footer">
-        {% include '_pagination.html' %}
+    <!-- Footer của Card: Chứa thông tin tổng số và phân trang -->
+    {% if pagination and pagination.total_items > 0 %}
+    <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+        <span class="text-muted small">
+            Hiển thị <strong>{{ cases|length }}</strong> trong tổng số <strong>{{ pagination.total_items }}</strong> ca bệnh
+        </span>
+        {% if pagination.total_pages > 1 %}
+            {% include '_pagination.html' %}
+        {% endif %}
     </div>
     {% endif %}
 </div>
 
+<!-- THÊM CSS TÙY CHỈNH CHO BADGE -->
+<style>
+    .bg-primary-soft {
+        background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        color: var(--bs-primary) !important;
+        border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+    }
+</style>
 
+<!-- SCRIPT CHO DROPDOWN ĐỘNG (GIỮ NGUYÊN) -->
 <script>
-    // Script cho dropdown động không thay đổi
+     // Script cho dropdown động không thay đổi
     document.addEventListener('DOMContentLoaded', function() {
         const khuVucSelect = document.getElementById('khu_vuc_select');
         const xaSelect = document.getElementById('xa_select');

@@ -14,6 +14,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename # <-- Giữ lại import này
 from flask import jsonify # Nhớ thêm jsonify vào import
 from sqlalchemy import func
+from dateutil.relativedelta import relativedelta # <<< THÊM IMPORT NÀY VÀO ĐẦU FILE
 # --- Imports từ project của bạn ---
 from webapp.core.database_utils import get_db_session
 from webapp.core.database_setup import DonViHanhChinh, CaBenh, O_Dich, NguoiDung
@@ -21,7 +22,7 @@ from webapp.core.week_calendar import WeekCalendar
 from webapp.core.report_generator import (
     generate_benh_truyen_nhiem_report, generate_sxh_report, 
     generate_odich_sxh_report, generate_odich_tcm_report,
-    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip, generate_custom_btn_report
+    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip, generate_custom_btn_report, generate_cases_export 
 )
 # === THAY ĐỔI: Import trực tiếp hàm logic, không qua task nữa ===
 from webapp.core.data_importer import import_data_from_excel
@@ -38,6 +39,7 @@ from webapp.core.admin_utils import (
 from webapp.core.utils import get_all_child_xa_ids
 from webapp.core.forms import ChangePasswordForm
 from webapp import cache # <<< THÊM DÒNG NÀY
+
 # Thêm hàm này vào file webapp/routes/main.py
 
 def make_dashboard_cache_key(*args, **kwargs):
@@ -468,6 +470,7 @@ def import_page():
 
 # --- CÁC ROUTE QUẢN LÝ CA BỆNH ---
 
+
 @main_bp.route('/cases', methods=['GET'])
 def cases_page():
     user_don_vi = g.user_don_vi
@@ -486,6 +489,19 @@ def cases_page():
     khu_vuc_id_str = request.args.get('khu_vuc_id', '')
     xa_id_str = request.args.get('xa_id', '')
     dia_chi_ap = request.args.get('dia_chi_ap', '')
+
+    
+    has_any_date_filter = any([start_date_str, end_date_str, report_start_date_str, report_end_date_str])
+    
+    if not has_any_date_filter:
+        today = date.today()
+        one_month_ago = today - relativedelta(months=1)
+        
+        # Cập nhật lại các biến chuỗi ngày tháng để sử dụng cho truy vấn và hiển thị
+        start_date_str = one_month_ago.strftime('%Y-%m-%d')
+        end_date_str = today.strftime('%Y-%m-%d')
+
+
 
     filter_data = {'khu_vuc_list': [], 'xa_list': [], 'ap_list': [], 'chan_doan_list': []}
 
