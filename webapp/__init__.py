@@ -1,43 +1,73 @@
 # file: webapp/__init__.py
-from flask import Flask
+
 import os
 from datetime import datetime
-from flask_caching import Cache # <<< THÊM DÒNG NÀY
+from flask import Flask, session, redirect, url_for
+from flask_caching import Cache
+from dotenv import load_dotenv
 
-# <<< THÊM CÁC DÒNG NÀY ĐỂ KHỞI TẠO CACHE
-# Sử dụng 'SimpleCache' cho môi trường phát triển. 
-# Khi triển khai thực tế, nên cân nhắc dùng 'RedisCache' hoặc 'MemcachedCache'.
+# =================================================================
+# === THAY ĐỔI 1: Tải biến môi trường ngay từ đầu ===
+# =================================================================
+load_dotenv()
+
+# Khởi tạo Cache
 cache = Cache(config={
     'CACHE_TYPE': 'SimpleCache',
-    'CACHE_DEFAULT_TIMEOUT': 300 # Thời gian cache mặc định là 300 giây (5 phút)
+    'CACHE_DEFAULT_TIMEOUT': 300
 })
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
-    try: os.makedirs(app.instance_path)
-    except OSError: pass
     
-    app.config.from_mapping(SECRET_KEY='chuoi_bi_mat_cua_ban_o_day_thay_doi_sau_nay')
+    # --- Cấu hình ứng dụng ---
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+
+    # =================================================================
+    # === THAY ĐỔI 2: Đọc cấu hình từ biến môi trường ===
+    # =================================================================
+    
+    # Lấy SECRET_KEY từ biến môi trường, nếu không có thì dùng giá trị mặc định (chỉ cho dev)
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_thay_the_sau')
+    
+    # Lấy DATABASE_URL từ biến môi trường. Nếu không có, ứng dụng sẽ báo lỗi.
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        raise ValueError("Lỗi cấu hình: Biến môi trường DATABASE_URL chưa được thiết lập. Vui lòng kiểm tra file .env")
+    
+    # In ra để xác nhận trong quá trình phát triển
+    print(f"--- Ứng dụng đang khởi tạo với CSDL: {database_url} ---")
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Tắt tính năng không cần thiết để tiết kiệm tài nguyên
+    
+    # Cấu hình thư mục báo cáo
     app.config['REPORT_FOLDER'] = os.path.join(app.instance_path, 'reports')
     os.makedirs(app.config['REPORT_FOLDER'], exist_ok=True)
     
-    cache.init_app(app) # <<< THÊM DÒNG NÀY ĐỂ KẾT NỐI CACHE VỚI APP
+    # Kết nối Cache với app
+    cache.init_app(app)
 
-    # THÊM ĐOẠN CODE NÀY ĐỂ INJECT BIẾN 'now' VÀO MỌI TEMPLATE
-    # Đặt nó sau khi 'app' được tạo, và trước khi 'app' được trả về.
+    # Inject biến 'now' vào mọi template
     @app.context_processor
     def inject_now():
         return {'now': datetime.now()}
     
+    # Đăng ký các blueprint
     with app.app_context():
         from .routes import auth, main, admin
         app.register_blueprint(auth.auth_bp)
         app.register_blueprint(main.main_bp)
         app.register_blueprint(admin.admin_bp)
     
+    # Route gốc để điều hướng
     @app.route('/')
-    def index(): 
-        from flask import session, redirect, url_for
-        return redirect(url_for('main.report_page')) if 'user_id' in session else redirect(url_for('auth.login'))
+    def index():
+        if 'user_id' in session:
+            return redirect(url_for('main.dashboard_page')) # Điều hướng đến dashboard nếu đã đăng nhập
+        return redirect(url_for('auth.login'))
     
     return app

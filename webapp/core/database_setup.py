@@ -73,20 +73,20 @@ class CaBenh(Base):
     # === THAY ĐỔI 2: Bỏ unique=True ở đây ===
     ma_so_benh_nhan = Column(String(100), nullable=False, index=True)
     
-    ho_ten = Column(String(250), index=True) # <<< THÊM INDEX
+    ho_ten = Column(String(500), index=True) # <<< THÊM INDEX
     ngay_sinh = Column(Date)
     gioi_tinh = Column(String(10))
     dia_chi_chi_tiet = Column(Text)
-    dia_chi_ap = Column(String(250))
+    dia_chi_ap = Column(String(500))
     
     # Thêm index=True vào các cột sẽ dùng cho ràng buộc UNIQUE
     ngay_khoi_phat = Column(Date, index=True)
-    chan_doan_chinh = Column(String(250), index=True)
+    chan_doan_chinh = Column(String(500), index=True)
 
     ngay_nhap_vien = Column(Date)
     ngay_ra_vien = Column(Date)
-    phan_do_benh = Column(String(250))
-    tinh_trang_hien_nay = Column(String(100))
+    phan_do_benh = Column(String(500))
+    tinh_trang_hien_nay = Column(String(350))
     ngay_import = Column(Date, default=date.today)
     
     xa_id = Column(Integer, ForeignKey('don_vi_hanh_chinh.id'), nullable=False, index=True) # <<< THÊM INDEX
