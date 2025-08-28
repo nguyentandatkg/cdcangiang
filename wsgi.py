@@ -10,4 +10,4 @@ if project_home not in sys.path:
 # Import ứng dụng Flask của bạn
 # Giả sử file chính tạo ra app Flask là 'run.py' và biến app tên là 'app'
 # Hãy thay đổi 'run' và 'app' cho đúng với dự án của bạn
-from run import app
+from run import app as application

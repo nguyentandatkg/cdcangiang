@@ -43,7 +43,7 @@
         <h5 class="fw-bold text-primary mb-3"><span class="badge bg-primary me-2">1</span>Chọn File để Tải lên</h5>
         <hr class="mt-0">
         
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.import_page') }}">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.import_page') }}" name="importForm">
             <div class="mb-3">
                 <label for="excel_file" class="form-label fw-semibold">File Excel theo mẫu (*.xlsx)</label>
                 <input class="form-control form-control-lg" type="file" id="excel_file" name="excel_file" accept=".xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>

@@ -27,7 +27,7 @@
         </h2>
         <div id="collapseFilter" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#filterAccordion">
             <div class="accordion-body bg-light">
-                <form method="GET" action="{{ url_for('main.manage_odich_page') }}">
+                <form method="GET" action="{{ url_for('main.manage_odich_page') }}" name="filterOdichForm">
                     <div class="row g-3">
                         <!-- Lọc theo thông tin chung -->
                         <div class="col-md-3">

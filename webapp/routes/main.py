@@ -21,7 +21,8 @@ from webapp.core.week_calendar import WeekCalendar
 from webapp.core.report_generator import (
     generate_benh_truyen_nhiem_report, generate_sxh_report, 
     generate_odich_sxh_report, generate_odich_tcm_report,
-    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip, generate_custom_btn_report
+    generate_benh_truyen_nhiem_report_monthly, generate_sxh_report_monthly, generate_all_reports_zip, generate_custom_btn_report,
+    generate_cases_export
 )
 # === THAY ĐỔI: Import trực tiếp hàm logic, không qua task nữa ===
 from webapp.core.data_importer import import_data_from_excel

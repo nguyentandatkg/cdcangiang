@@ -197,12 +197,14 @@
                 if (window.scrollY > 50) {
                     navbar.classList.add("scrolled");
                     if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                        modeToggle.classList.replace("text-dark", "text-light");
+                        modeToggle.classList.remove("text-dark");
+                        modeToggle.classList.add("text-light");
                     }
                 } else {
                     navbar.classList.remove("scrolled");
                     if (modeToggle && !document.body.classList.contains("dark-mode")) { // Chỉ đổi màu icon khi không ở dark mode
-                        modeToggle.classList.replace("text-light", "text-dark");
+                        modeToggle.classList.remove("text-light");
+                        modeToggle.classList.add("text-dark");
                     }
                 }
             });

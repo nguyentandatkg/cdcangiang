@@ -29,7 +29,7 @@
         <div class="col-lg-5 p-4">
           <h5 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-event me-2"></i>1. Báo cáo tùy chọn</h5>
           <hr class="mt-0">
-          <form method="POST" action="{{ url_for('main.report_page') }}">
+          <form method="POST" action="{{ url_for('main.report_page') }}" name="periodicReportForm">
               <!-- Mẫu báo cáo -->
               <div class="mb-3">
                   <label for="report_template" class="form-label fw-semibold">Mẫu báo cáo</label>

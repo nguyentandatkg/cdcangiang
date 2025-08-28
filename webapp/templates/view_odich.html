@@ -44,7 +44,7 @@
                 <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Thông tin & Cài đặt <span class="badge bg-secondary fw-normal ms-2">ID: {{ odich.id }}</span></h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('main.view_odich_page', odich_id=odich.id) }}">
+                <form method="POST" action="{{ url_for('main.view_odich_page', odich_id=odich.id) }}" name="updateOdichForm" enctype="multipart/form-data">
                     
                     <!-- THÔNG TIN CHUNG -->
                     <h6 class="text-primary fw-bold"><i class="bi bi-info-circle me-2"></i>Thông tin chung</h6>

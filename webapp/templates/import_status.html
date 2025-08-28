@@ -33,7 +33,12 @@
 
     function checkJobStatus() {
         fetch(`/task-result/${jobId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 const jobStatus = data.data.job_status;
                 const jobResult = data.data.job_result;
@@ -65,7 +70,8 @@
             })
             .catch(err => {
                 console.error('Error fetching job status:', err);
-                statusMessage.textContent = 'Lỗi kết nối. Không thể lấy trạng thái.';
+                statusMessage.textContent = 'Lỗi kết nối hoặc không tìm thấy tác vụ. Không thể lấy trạng thái.';
+                statusText.style.display = 'none'; // Ẩn spinner
                 clearInterval(intervalId); // Dừng nếu có lỗi mạng
             });
     }
