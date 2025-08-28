@@ -133,19 +133,23 @@
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" style="vertical-align: middle;">
                                 <thead>
+                                    <!-- NÂNG CẤP: Thêm cột Địa chỉ và Tình trạng -->
                                     <tr>
-                                        <th scope="col">Mã BN</th>
                                         <th scope="col">Họ và Tên</th>
-                                        <th scope="col">Ngày khởi phát</th>
+                                        <th scope="col">Ngày KP</th>
+                                        <th scope="col">Địa chỉ (Ấp)</th>
+                                        <th scope="col">Tình trạng</th>
                                         <th scope="col" class="text-end">Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for case in odich.ca_benh_lien_quan %}
                                     <tr>
-                                        <td>{{ case.id }}</td>
-                                        <td><a href="{{ url_for('main.view_case_page', case_id=case.id) }}">{{ case.ho_ten }}</a></td>
+                                        <!-- NÂNG CẤP: Gộp Tên và Mã BN -->
+                                        <td><a href="{{ url_for('main.view_case_page', case_id=case.id) }}">{{ case.ho_ten }}</a> <span class="text-muted small">#{{ case.id }}</span></td>
                                         <td>{{ case.ngay_khoi_phat.strftime('%d/%m/%Y') if case.ngay_khoi_phat else 'N/A' }}</td>
+                                        <td class="small text-muted">{{ case.dia_chi_ap or 'Không rõ' }}</td>
+                                        <td><span class="badge bg-info-subtle text-info-emphasis">{{ case.tinh_trang_hien_nay or 'Không rõ' }}</span></td>
                                         <td class="text-end">
                                             <form action="{{ url_for('main.unlink_case_from_odich_action', case_id=case.id) }}" method="POST" class="d-inline">
                                                 <button type="button" class="btn btn-sm btn-outline-danger" title="Gỡ ca bệnh khỏi ổ dịch" onclick="if(confirm('Bạn có chắc muốn gỡ ca bệnh [{{ case.ho_ten }}] khỏi ổ dịch này không?')) { this.form.submit(); }">
@@ -155,7 +159,7 @@
                                         </td>
                                     </tr>
                                     {% else %}
-                                    <tr><td colspan="4" class="text-center text-muted p-4">Chưa có ca bệnh nào được liên kết.</td></tr>
+                                    <tr><td colspan="5" class="text-center text-muted p-4">Chưa có ca bệnh nào được liên kết.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>

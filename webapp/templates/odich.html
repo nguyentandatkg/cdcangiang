@@ -125,10 +125,10 @@
                         <td class="small text-muted">{{ od.dia_diem_xu_ly | truncate(50) if od.dia_diem_xu_ly else '' }}</td>
                         
                         <td class="text-center" style="white-space: nowrap;">
-                             <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-sm btn-outline-primary" title="Xem Chi tiết & Quản lý ca bệnh"><i class="bi bi-eye"></i></a>
+                             <!-- NÂNG CẤP: Gộp nút Xem và Sửa thành một cho gọn -->
+                             <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-sm btn-outline-primary" title="Chi tiết & Sửa"><i class="bi bi-pencil-square"></i></a>
                             <!-- <<< SỬA ĐIỂM 2: Mở quyền cho 'khuvuc' -->
                             {% if session.get('role') in ['admin', 'khuvuc'] %}
-                                <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-sm btn-outline-warning" title="Sửa thông tin"><i class="bi bi-pencil-square"></i></a>
                                 <form action="{{ url_for('main.delete_odich_action', odich_id=od.id) }}" method="POST" class="d-inline">
                                     <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="if(confirm('Bạn có chắc muốn xóa ổ dịch này? Thao tác này KHÔNG xóa các ca bệnh liên quan.')) { this.form.submit(); }">
                                         <i class="bi bi-trash"></i>
