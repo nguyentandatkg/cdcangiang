@@ -13,8 +13,7 @@
             padding-top: 5rem;
             background-color: #f4f7f6;
             color: #212529;
-            transition: background-color 0.3s, color 0.3s;
-            min-height: 100vh; /* Đảm bảo body đủ cao để footer xuống cuối */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -46,14 +45,10 @@
             transform: translateY(-2px);
             text-shadow: 0 0 4px rgba(0,0,0,0.2);
         }
-        .btn-mode {
-            border: none;
-            background: transparent;
-        }
-        .cdc-logo-navbar { /* Style cho logo trên navbar */
-            height: 40px; /* Chiều cao cố định */
+        .cdc-logo-navbar {
+            height: 40px;
             margin-right: 0.75rem;
-            border-radius: 5px; /* Bo tròn nhẹ các góc của logo */
+            border-radius: 5px;
         }
 
         /* Loading Spinner */
@@ -68,10 +63,7 @@
             z-index: 2000;
             display: none;
         }
-        body.dark-mode #loadingOverlay {
-             background: rgba(0,0,0,0.7);
-        }
-
+        
         /* Main content flex grow to push footer down */
         main.container {
             flex-grow: 1;
@@ -81,7 +73,7 @@
         footer {
             background-color: #e9ecef;
             padding: 2rem 0;
-            margin-top: auto; /* Đẩy footer xuống cuối trang */
+            margin-top: auto;
             border-top: 1px solid #dee2e6;
             color: #495057;
             font-size: 0.9rem;
@@ -99,7 +91,6 @@
         }
     </style>
     
-    {# Block này để các trang con có thể thêm CSS hoặc thẻ meta riêng #}
     {% block head %}{% endblock head %}
 </head>
 <body>
@@ -113,7 +104,6 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('main.cases_page') }}">
-                <!-- LOGO CDC AN GIANG -->
                 <img src="https://www.bing.com/th/id/OIP.CTFXYPiQ-YD0klDdHGp9KAHaHa?w=207&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2" alt="CDC An Giang Logo" class="cdc-logo-navbar">
                 <span>Hệ thống Quản lý bệnh truyền nhiễm</span>
             </a>
@@ -124,11 +114,9 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard_page') }}"><i class="bi bi-graph-up"></i> Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.report_page') }}"><i class="bi bi-bar-chart-steps"></i> Báo cáo</a></li>
-                    
                     {% if session.get('role') in ['admin', 'khuvuc'] %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.import_page') }}"><i class="bi bi-cloud-upload"></i> Import Dữ liệu</a></li>
                     {% endif %}
-                    
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.cases_page') }}"><i class="bi bi-journal-medical"></i> Quản lý Ca bệnh</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.manage_odich_page') }}"><i class="bi bi-shield-exclamation"></i> Quản lý Ổ dịch</a></li>
                     {% if session.get('role') == 'admin' %}
@@ -136,9 +124,7 @@
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
-                    <li class="nav-item me-2">
-                        <button id="modeToggle" class="btn-mode text-dark" title="Chuyển chế độ"><i class="bi bi-moon-stars"></i></button>
-                    </li>
+                    <!-- ĐÃ XÓA NÚT CHUYỂN CHẾ ĐỘ (MẶT TRĂNG) Ở ĐÂY -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-circle"></i> {{ session.get('username', 'Guest') }}
@@ -169,10 +155,9 @@
             </div>
         {% endfor %}
         </div>
-    {% endif %}
-    {% endwith %}
-
-    {% block content %}{% endblock %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
     </main>
 
     <footer>
@@ -186,40 +171,19 @@
         </div>
     </footer>
 
-    <!-- === ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG NHẤT === -->
-    
-    <!-- 1. Tải thư viện Bootstrap. Dòng này nằm ngoài block và sẽ luôn được tải. -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- 2. Các script CHUNG của toàn bộ trang web. Chúng cũng nằm ngoài block. -->
     <script>
-        // Navbar đổi màu khi cuộn
+        // Navbar đổi màu khi cuộn (phiên bản đơn giản hóa)
         window.addEventListener("scroll", function () {
             const navbar = document.querySelector(".navbar");
-            const modeToggle = document.querySelector("#modeToggle");
             if (window.scrollY > 50) {
                 navbar.classList.add("scrolled");
-                if (modeToggle && !document.body.classList.contains("dark-mode")) {
-                    modeToggle.classList.replace("text-dark", "text-light");
-                }
             } else {
                 navbar.classList.remove("scrolled");
-                if (modeToggle && !document.body.classList.contains("dark-mode")) {
-                    modeToggle.classList.replace("text-light", "text-dark");
-                }
             }
         });
         
-        // Lưu trạng thái theme khi tải lại
-        window.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem("theme") === "dark") {
-                document.body.classList.add("dark-mode");
-                const icon = document.querySelector("#modeToggle i");
-                const modeToggle = document.querySelector("#modeToggle");
-                if(icon) icon.classList.replace("bi-moon-stars", "bi-brightness-high");
-                if(modeToggle) modeToggle.classList.replace("text-dark", "text-light");
-            }
-        });
+        // ĐÃ XÓA SCRIPT LƯU TRẠNG THÁI GIAO DIỆN TỐI
 
         // Show loading overlay khi submit form
         document.addEventListener('DOMContentLoaded', function() {
@@ -248,7 +212,6 @@
         });
     </script>
     
-    <!-- 3. Khối block scripts TRỐNG. Đây là nơi các trang con sẽ chèn script của riêng chúng vào. -->
     {% block scripts %}{% endblock scripts %}
 
 </body>

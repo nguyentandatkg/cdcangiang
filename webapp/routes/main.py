@@ -38,6 +38,16 @@ from webapp.core.admin_utils import (
 from webapp.core.utils import get_all_child_xa_ids
 from webapp.core.forms import ChangePasswordForm
 from webapp import cache # <<< THÊM DÒNG NÀY
+# Thêm hàm này vào file webapp/routes/main.py
+
+def make_dashboard_cache_key(*args, **kwargs):
+    """
+    Tạo một cache key duy nhất cho dashboard, bao gồm cả user_id và các tham số lọc.
+    """
+    user_id = session.get('user_id', 'anonymous')
+    # Sắp xếp các tham số để ?a=1&b=2 và ?b=2&a=1 có cùng key
+    query_params = str(sorted(request.args.items()))
+    return f'dashboard:{user_id}:{request.path}:{query_params}'
 
 main_bp = Blueprint('main', __name__)
 
@@ -176,8 +186,9 @@ def home_page():
     return redirect(url_for('main.dashboard_page'))
 
 @main_bp.route('/dashboard')
-@cache.cached(timeout=300, query_string=True) # <<< THÊM DECORATOR NÀY
+@cache.cached(timeout=300, make_cache_key=make_dashboard_cache_key) # <<< THAY ĐỔI Ở ĐÂY
 def dashboard_page():
+    # ... (giữ nguyên phần còn lại của hàm)
     user_don_vi = g.user_don_vi
     db = g.db
 
