@@ -8,7 +8,7 @@ import sys
 SQLITE_URI = 'sqlite:///instance/mydatabase.db' # <<< CẬP NHẬT ĐÚNG ĐƯỜNG DẪN FILE .db
 
 # 2. Cấu hình CSDL đích (PostgreSQL)
-POSTGRES_URI = 'postgresql://myuser:secretpassword@localhost:5432/myappdb' # <<< CẬP NHẬT THÔNG TIN CỦA BẠN
+POSTGRES_URI = 'postgresql://cdcangiang:LCCaV5eZf8VwShvbvDpehzgDB8mX3H8a@dpg-d2o6hs95pdvs739iflkg-a.singapore-postgres.render.com/cdcangiangdb' # <<< CẬP NHẬT THÔNG TIN CỦA BẠN
 
 # 3. Liệt kê TẤT CẢ các bảng bạn muốn di chuyển theo đúng thứ tự (bảng cha trước, bảng con sau)
 # Ví dụ: DonViHanhChinh phải có trước NguoiDung, CaBenh, O_Dich
