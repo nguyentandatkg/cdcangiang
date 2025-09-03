@@ -8,7 +8,6 @@
         <p class="text-muted mb-0">Theo dõi, tìm kiếm và quản lý các ổ dịch đã ghi nhận.</p>
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <!-- <<< SỬA ĐIỂM 1: Mở quyền cho 'khuvuc' -->
         {% if session.get('role') in ['admin', 'khuvuc'] %}
         <a href="{{ url_for('main.new_odich_page') }}" class="btn btn-primary shadow-sm">
             <i class="bi bi-plus-circle me-2"></i> Khai báo Ổ dịch mới
@@ -125,18 +124,42 @@
                         <td class="small text-muted">{{ od.dia_diem_xu_ly | truncate(50) if od.dia_diem_xu_ly else '' }}</td>
                         
                         <td class="text-center" style="white-space: nowrap;">
-                             <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-sm btn-outline-primary" title="Xem Chi tiết & Quản lý ca bệnh"><i class="bi bi-eye"></i></a>
-                            <!-- <<< SỬA ĐIỂM 2: Mở quyền cho 'khuvuc' -->
-                            {% if session.get('role') in ['admin', 'khuvuc'] %}
-                                <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-sm btn-outline-warning" title="Sửa thông tin"><i class="bi bi-pencil-square"></i></a>
-                                <form action="{{ url_for('main.delete_odich_action', odich_id=od.id) }}" method="POST" class="d-inline">
-                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="if(confirm('Bạn có chắc muốn xóa ổ dịch này? Thao tác này KHÔNG xóa các ca bệnh liên quan.')) { this.form.submit(); }">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.view_odich_page', odich_id=od.id) }}" class="btn btn-outline-secondary" title="Xem Chi tiết & Quản lý ca bệnh"><i class="bi bi-eye"></i></a>
+                                {% if session.get('role') in ['admin', 'khuvuc'] %}
+                                    <a href="{{ url_for('main.new_odich_page', odich_id=od.id) }}" class="btn btn-outline-secondary" title="Sửa thông tin"><i class="bi bi-pencil-square"></i></a>
+                                    
+                                    <!-- <<< THAY ĐỔI 1: Sửa nút Xóa để kích hoạt Modal thay vì dùng confirm() của trình duyệt -->
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ od.id }}" title="Xóa">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                </form>
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
+                    <!-- <<< THAY ĐỔI 2: Thêm Modal xác nhận xóa cho mỗi ổ dịch, tương tự file case.html -->
+                    <div class="modal fade" id="deleteModal-{{ od.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ od.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel-{{ od.id }}">Xác nhận Xóa Ổ dịch</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Bạn có chắc chắn muốn xóa ổ dịch tại <strong>{{ od.don_vi.ten_don_vi if od.don_vi else 'Không rõ' }}</strong> 
+                                    phát hiện ngày <strong>{{ od.ngay_phat_hien.strftime('%d/%m/%Y') }}</strong>?
+                                    <br><br>
+                                    <strong class="text-danger">Lưu ý:</strong> Thao tác này KHÔNG xóa các ca bệnh đã được liên kết với ổ dịch này.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="{{ url_for('main.delete_odich_action', odich_id=od.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% else %}
                     <tr>
                         <td colspan="7">
